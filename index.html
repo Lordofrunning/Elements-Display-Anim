@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+  <title>Button Showcase</title>
+</head>
+<body>
+  <h1>Button Showcase</h1>
+  <div class="layout">
+    <aside class="panel left-panel">
+      <h2>Left Panel</h2>
+      <p>10% width panel</p>
+    </aside>
+
+    <main class="main-panel">
+      <div class="button-grid">
+        <button class="btn btn-1">Pulse</button>
+        <button class="btn btn-3">Glow</button>
+  <button class="btn btn-4">Bounce</button>
+  <button class="btn btn-5">Bob</button>
+  <button class="btn btn-6">Shimmer</button>
+      </div>
+    </main>
+
+    <aside class="panel right-panel">
+      <h2>Theme Switcher</h2>
+      <p>Use the controls below to change colors.</p>
+
+      <label for="target-select">Target</label>
+      <select id="target-select">
+        <option value="all">All Buttons</option>
+        <option value="btn1">Pulse</option>
+        <option value="btn3">Glow</option>
+  <option value="btn4">Bounce</option>
+  <option value="btn5">Bob</option>
+  <option value="btn6">Shimmer</option>
+        <option value="left-panel">Left Panel</option>
+        <option value="right-panel">Right Panel</option>
+        <option value="text">Text Color</option>
+        <option value="accent">Accent</option>
+      </select>
+
+      <label for="color-picker">Pick color</label>
+      <input id="color-picker" type="color" value="#ffffff" />
+
+      <div class="panel-buttons">
+        <button id="apply-color" class="btn">Apply</button>
+        <button id="reset-colors" class="btn">Reset</button>
+      </div>
+
+      <small style="display:block;margin-top:12px;color:var(--text);opacity:0.8">Tip: choose a target, pick a color, then Apply.</small>
+    </aside>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

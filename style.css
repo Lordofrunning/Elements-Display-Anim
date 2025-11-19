@@ -1,0 +1,259 @@
+:root {
+  --bg: #111111;
+  --text: #ffffff;
+  --panel-left-bg: rgba(255, 255, 255, 0.03);
+  --panel-right-bg: rgba(255, 255, 255, 0.03);
+  --accent: rgba(255, 255, 255, 0.3);
+  --btn-base: #3498db;
+  --btn-1: var(--btn-base);
+  --btn-2: var(--btn-base);
+  --btn-3: var(--btn-base);
+  --btn-4: var(--btn-base);
+  --btn-5: var(--btn-base);
+  --btn-6: var(--btn-base);
+  /* per-button text contrast (computed by JS when colors change). If unset, falls back to --text */
+  --btn-1-text: var(--text);
+  --btn-2-text: var(--text);
+  --btn-3-text: var(--text);
+  --btn-4-text: var(--text);
+  --btn-5-text: var(--text);
+  --btn-6-text: var(--text);
+  /* button sizing and responsive gap */
+  --btn-height: 60px; /* reduced base height (2x smaller) */
+  --btn-max-height: 120px; /* maximum button tile height when space allows */
+  --btn-max-width: 280px; /* maximum width for a button tile (reduced by 1/3) */
+  --btn-gap: clamp(12px, 2.5vw, 48px); /* reactive gap between buttons */
+  --btn-padding: clamp(6px, 1.5vw, 20px); /* padding increases when there's more room */
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Layout wrapper — panels will be fixed to viewport edges */
+.layout {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* Fixed edge panels: 10% width, full viewport height */
+.panel {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 10%;
+  padding: 16px;
+  box-sizing: border-box;
+  color: var(--text);
+  font-size: 0.9rem;
+  overflow-y: auto;
+  overflow-x: hidden; /* prevent horizontal overflow */
+}
+
+.left-panel { left: 0; background: var(--panel-left-bg); }
+.right-panel { right: 0; background: var(--panel-right-bg); }
+
+/* Ensure page heading appears above panels */
+h1 { position: relative; z-index: 2; }
+
+/* Main content centered and constrained to 50% of the viewport */
+.main-panel {
+  width: 50%;
+  margin: 20px auto;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+  /* keep height driven by content; buttons will have fixed height */
+  padding: 12px 0;
+}
+
+/* Button grid fills the main panel */
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 columns for 4 buttons */
+  grid-auto-rows: minmax(var(--btn-height), var(--btn-max-height)); /* allow rows to grow up to max */
+  gap: var(--btn-gap); /* reactive gap between buttons */
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Panel form controls: ensure they fit inside narrow 10% panels */
+.panel label { display:block; margin-top:12px; font-size:0.85rem; }
+.panel select,
+.panel input[type="color"],
+.panel input[type="text"] {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-top:6px;
+}
+
+/* buttons row inside panel: side-by-side but constrained */
+.panel .panel-buttons { display:flex; gap:8px; margin-top:10px; }
+.panel .panel-buttons .btn { flex:1; font-size:0.9rem; padding:8px 10px; }
+
+/* smaller typography inside panels to help fit content */
+.panel h2 { font-size:1rem; margin:0 0 8px 0; }
+.panel p, .panel small { font-size:0.8rem; margin:0; }
+
+/* Responsive: hide side panels on narrow screens and let main content expand */
+@media (max-width: 900px) {
+  .panel { display: none; }
+  .main-panel { width: 90%; }
+}
+
+.btn {
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: var(--text); /* fallback for controls and any button without per-button text var */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* size constraints: allow buttons to be smaller than the cell, centered, and grow padding when space allows */
+  width: min(100%, var(--btn-max-width));
+  min-height: var(--btn-height);
+  max-height: var(--btn-max-height);
+  padding: var(--btn-padding);
+  align-self: center;
+  justify-self: center;
+}
+
+/* Button Styles */
+.btn-1 {
+  background: var(--btn-1);
+  color: var(--btn-1-text, var(--text));
+}
+.btn-1:hover {
+  transform: scale(1.1);
+}
+
+.btn-2 {
+  background: var(--btn-2);
+  color: var(--btn-2-text, var(--text));
+}
+.btn-2:hover {
+  transform: translateX(10px);
+}
+
+.btn-3 {
+  background: var(--btn-3);
+  box-shadow: 0 0 10px transparent;
+  color: var(--btn-3-text, var(--text));
+}
+.btn-3:hover {
+  box-shadow: 0 0 15px var(--btn-3);
+}
+
+/* Automatic effect classes: when JS adds .auto to a button, trigger the same visual effect as hover */
+.btn-1.auto { transform: scale(1.1); }
+.btn-2.auto { transform: translateX(10px); }
+.btn-3.auto { box-shadow: 0 0 15px var(--btn-3); }
+.btn-4.auto { animation: bounce 0.5s; }
+.btn-5.auto { transform: rotateY(180deg); }
+
+.btn-4 {
+  background: var(--btn-4);
+  color: var(--btn-4-text, var(--text));
+}
+.btn-4:hover {
+  animation: bounce 0.5s;
+}
+
+@keyframes bounce {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0); }
+}
+
+.btn-5 {
+  background: var(--btn-5);
+  position: relative;
+  color: var(--btn-5-text, var(--text));
+  overflow: visible;
+  z-index: 1; /* keep above its shadow */
+}
+
+/* slow bob animation: button rises and returns (separate from other auto loop) */
+@keyframes bob {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-16px); }
+  100% { transform: translateY(0); }
+}
+
+/* shadow animation that sits below the button (uses blur) */
+@keyframes bob-shadow {
+  0% { transform: translateX(-50%) scaleX(1); opacity: 0.7; filter: blur(4px); }
+  50% { transform: translateX(-50%) scaleX(0.6); opacity: 0.45; filter: blur(6px); }
+  100% { transform: translateX(-50%) scaleX(1); opacity: 0.7; filter: blur(4px); }
+}
+
+.btn-5::after {
+  /* oval shadow placed slightly below the button */
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -10px; /* place beneath the button */
+  transform: translateX(-50%) scaleX(1);
+  width: 48%;
+  height: 10px;
+  background: var(--btn-5-shadow, rgba(0,0,0,0.45));
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0; /* behind the button */
+  filter: blur(4px);
+}
+
+/* trigger bob on hover and when .auto class is applied */
+.btn-5:hover,
+.btn-5.auto {
+  animation: bob 2.8s ease-in-out;
+}
+.btn-5:hover::after,
+.btn-5.auto::after {
+  animation: bob-shadow 2.8s ease-in-out;
+}
+
+.btn-6 {
+  background: var(--btn-6);
+  position: relative;
+  overflow: hidden;
+  color: var(--btn-6-text, var(--text));
+}
+
+/* shimmer animation for btn-6: used both on hover (via transition) and by .auto (via animation) */
+.btn-6::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: var(--accent);
+  transform: skewX(-20deg);
+}
+.btn-6:hover::after {
+  left: 150%;
+  transition: left 0.5s;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 150%; }
+}
+.btn-6.auto::after {
+  animation: shimmer 0.6s linear;
+}
