@@ -2,12 +2,15 @@ document.addEventListener('DOMContentLoaded', () => {
 	const root = document.documentElement;
 
 	const targets = {
-		all: ['--btn-1','--btn-3','--btn-4','--btn-5','--btn-6'],
+		all: ['--btn-1','--btn-3','--btn-4','--btn-5','--btn-6','--btn-7','--btn-8','--btn-9'],
 		btn1: ['--btn-1'],
 		btn3: ['--btn-3'],
 		btn4: ['--btn-4'],
 		btn5: ['--btn-5'],
 		btn6: ['--btn-6'],
+		btn7: ['--btn-7'],
+		btn8: ['--btn-8'],
+		btn9: ['--btn-9'],
 		'left-panel': ['--panel-left-bg'],
 		'right-panel': ['--panel-right-bg'],
 		text: ['--text'],
@@ -161,4 +164,77 @@ document.addEventListener('DOMContentLoaded', () => {
 	});
 
 	// (Shimmer handlers moved into per-button setup above.)
+
+	// --- Global animation toggle (looped animations vs hover-only) ---
+	const animToggle = document.getElementById('animations-toggle');
+	// store interval IDs so they can be cleared
+	const _loops = {};
+
+	function startAutoLoops() {
+		Object.values(perButtonConfigs).forEach(cfg => {
+			const el = document.querySelector(cfg.selector);
+			if (!el) return;
+
+			const trigger = () => {
+				// Shimmer (btn-6) plays forward then reverse
+				if (cfg.selector === '.btn-6') {
+					el.classList.remove('shimmer-reverse');
+					el.classList.remove('shimmer-forward');
+					// force reflow
+					// eslint-disable-next-line no-unused-expressions
+					el.offsetWidth;
+					el.classList.add('shimmer-forward');
+					// remove forward after duration and play reverse to return
+					setTimeout(() => {
+						el.classList.remove('shimmer-forward');
+						el.classList.add('shimmer-reverse');
+						setTimeout(() => el.classList.remove('shimmer-reverse'), cfg.duration + 50);
+					}, cfg.duration);
+					return;
+				}
+
+				// other buttons: add .auto briefly
+				el.classList.add('auto');
+				setTimeout(() => el.classList.remove('auto'), cfg.duration);
+			};
+
+			// run once after initialDelay (if provided) then on interval
+			const delay = cfg.initialDelay || 0;
+			const tid = setTimeout(() => {
+				trigger();
+				// store interval for repeated triggers
+				_loops[cfg.selector] = setInterval(trigger, cfg.interval);
+			}, delay);
+			// keep the initial timeout id as well so we can clear if toggled off early
+			_loops[cfg.selector + '::init'] = tid;
+		});
+	}
+
+	function stopAutoLoops() {
+		// clear all timers
+		Object.values(_loops).forEach(id => clearInterval(id) || clearTimeout(id));
+		Object.keys(_loops).forEach(k => delete _loops[k]);
+		// remove any effect classes left behind
+		Object.values(perButtonConfigs).forEach(cfg => {
+			const el = document.querySelector(cfg.selector);
+			if (!el) return;
+			el.classList.remove('auto');
+			el.classList.remove('shimmer-forward');
+			el.classList.remove('shimmer-reverse');
+		});
+	}
+
+	// wire the checkbox: checked = ON (looping), unchecked = OFF (hover-only)
+	if (animToggle) {
+		// ensure default is OFF (hover-only)
+		animToggle.checked = false;
+		animToggle.addEventListener('change', () => {
+			if (animToggle.checked) {
+				startAutoLoops();
+			} else {
+				stopAutoLoops();
+			}
+		});
+	}
+
 });

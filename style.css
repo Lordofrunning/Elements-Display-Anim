@@ -10,6 +10,9 @@
   --btn-4: var(--btn-base);
   --btn-5: var(--btn-base);
   --btn-6: var(--btn-base);
+  --btn-7: var(--btn-base);
+  --btn-8: var(--btn-base);
+  --btn-9: var(--btn-base);
   /* per-button text contrast (computed by JS when colors change). If unset, falls back to --text */
   --btn-1-text: var(--text);
   /* --btn-2 removed */
@@ -17,6 +20,9 @@
   --btn-4-text: var(--text);
   --btn-5-text: var(--text);
   --btn-6-text: var(--text);
+  --btn-7-text: var(--text);
+  --btn-8-text: var(--text);
+  --btn-9-text: var(--text);
   /* bob shadow default: use subtle white/grey (assumes dark background) */
   --btn-5-shadow: rgba(255,255,255,0.12);
   /* button sizing and responsive gap */
@@ -63,6 +69,16 @@ h1 {
 
 .left-panel { left: 0; background: var(--panel-left-bg); }
 .right-panel { right: 0; background: var(--panel-right-bg); }
+
+/* Split the left panel vertically into two equal halves */
+.left-panel { display:flex; flex-direction:column; }
+.left-panel .panel-top { flex:1; }
+.left-panel .panel-bottom { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+
+/* Simple toggle styling that fits narrow panel */
+.toggle-wrap { display:flex; align-items:center; gap:8px; }
+.toggle-wrap input[type="checkbox"] { width: 1.2rem; height: 1.2rem; }
+.toggle-slider { font-size:0.85rem; cursor:pointer; user-select:none; }
 
 /* Ensure page heading appears above panels */
 h1 { position: relative; z-index: 2; }
@@ -226,6 +242,26 @@ h1 { position: relative; z-index: 2; }
   position: relative;
   overflow: hidden;
   color: var(--btn-6-text, var(--text));
+}
+
+/* Constant glow buttons: subtle / medium / high intensity */
+.btn-7 {
+  background: var(--btn-7);
+  color: var(--btn-7-text, var(--text));
+  /* subtle constant glow */
+  box-shadow: 0 0 8px 2px var(--btn-7);
+}
+.btn-8 {
+  background: var(--btn-8);
+  color: var(--btn-8-text, var(--text));
+  /* medium constant glow */
+  box-shadow: 0 0 14px 4px var(--btn-8);
+}
+.btn-9 {
+  background: var(--btn-9);
+  color: var(--btn-9-text, var(--text));
+  /* high-intensity constant glow */
+  box-shadow: 0 0 24px 6px var(--btn-9);
 }
 
 /* shimmer animation for btn-6: used both on hover (via transition) and by .auto (via animation) */

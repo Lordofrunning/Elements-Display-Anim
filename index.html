@@ -10,17 +10,31 @@
   <h1>Button Showcase</h1>
   <div class="layout">
     <aside class="panel left-panel">
-      <h2>Left Panel</h2>
-      <p>10% width panel</p>
+      <div class="panel-top">
+        <h2>Left Panel</h2>
+        <p>10% width panel</p>
+      </div>
+
+      <div class="panel-bottom">
+        <label for="animations-toggle" style="display:block;margin-bottom:8px;font-size:0.95rem">Animations</label>
+        <div class="toggle-wrap">
+          <input type="checkbox" id="animations-toggle" />
+          <label for="animations-toggle" class="toggle-slider">On / Off</label>
+        </div>
+        <small style="display:block;margin-top:8px;color:var(--text);opacity:0.8">Toggle ON = automatic looped animations; OFF = mouseover only.</small>
+      </div>
     </aside>
 
     <main class="main-panel">
       <div class="button-grid">
         <button class="btn btn-1">Pulse</button>
         <button class="btn btn-3">Glow</button>
-  <button class="btn btn-4">Bounce</button>
-  <button class="btn btn-5">Bob</button>
-  <button class="btn btn-6">Shimmer</button>
+        <button class="btn btn-4">Bounce</button>
+        <button class="btn btn-5">Bob</button>
+        <button class="btn btn-6">Shimmer</button>
+        <button class="btn btn-7">Subtle Glow</button>
+        <button class="btn btn-8">Medium Glow</button>
+        <button class="btn btn-9">High Glow</button>
       </div>
     </main>
 
@@ -36,6 +50,9 @@
   <option value="btn4">Bounce</option>
   <option value="btn5">Bob</option>
   <option value="btn6">Shimmer</option>
+  <option value="btn7">Subtle Glow</option>
+  <option value="btn8">Medium Glow</option>
+  <option value="btn9">High Glow</option>
         <option value="left-panel">Left Panel</option>
         <option value="right-panel">Right Panel</option>
         <option value="text">Text Color</option>
