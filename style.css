@@ -25,6 +25,8 @@
   --btn-9-text: var(--text);
   /* bob shadow default: use subtle white/grey (assumes dark background) */
   --btn-5-shadow: rgba(255,255,255,0.12);
+  /* divider line inside left panel (follows theme) */
+  --panel-divider: rgba(255,255,255,0.12);
   /* button sizing and responsive gap */
   --btn-height: 60px; /* reduced base height (2x smaller) */
   --btn-max-height: 120px; /* maximum button tile height when space allows */
@@ -74,6 +76,24 @@ h1 {
 .left-panel { display:flex; flex-direction:column; }
 .left-panel .panel-top { flex:1; }
 .left-panel .panel-bottom { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+
+/* Divider inside the left panel (horizontal rule centered) */
+.panel-divider {
+  width: 70%;
+  height: 4px;
+  background: var(--panel-divider);
+  border-radius: 2px;
+  align-self: center;
+  margin: 0 auto;
+}
+
+/* Right panel split into equal top/bottom halves with divider at midpoint */
+.right-panel { display:flex; flex-direction:column; }
+.right-panel .right-top { flex:1; overflow-y:auto; padding-bottom:8px; }
+.right-panel .right-bottom { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding-top:8px; }
+
+/* make the divider span across the panel area and be visible even in narrow width */
+.right-panel > .panel-divider { width: 80%; height: 3px; margin: 0 auto; }
 
 /* Simple toggle styling that fits narrow panel */
 .toggle-wrap { display:flex; align-items:center; gap:8px; }

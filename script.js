@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	const root = document.documentElement;
 
 	const targets = {
-		all: ['--btn-1','--btn-3','--btn-4','--btn-5','--btn-6','--btn-7','--btn-8','--btn-9'],
+		all: ['--btn-1','--btn-3','--btn-4','--btn-5','--btn-6','--btn-7','--btn-8','--btn-9','--panel-divider'],
 		btn1: ['--btn-1'],
 		btn3: ['--btn-3'],
 		btn4: ['--btn-4'],
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		btn7: ['--btn-7'],
 		btn8: ['--btn-8'],
 		btn9: ['--btn-9'],
-		'left-panel': ['--panel-left-bg'],
+		'left-panel': ['--panel-left-bg','--panel-divider'],
 		'right-panel': ['--panel-right-bg'],
 		text: ['--text'],
 		accent: ['--accent']
