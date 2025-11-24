@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
 	const root = document.documentElement;
 
-	// Set default background
-	document.body.classList.add('bg-plain');
+	// Set default view
+	document.body.classList.add('view-plain');
 
 	const targets = {
 		all: ['--btn-1','--btn-3','--btn-4','--btn-5','--btn-6','--btn-7','--btn-8','--btn-9','--btn-base','--panel-divider'],
@@ -254,8 +254,23 @@ document.addEventListener('DOMContentLoaded', () => {
 	document.querySelectorAll('.menu-option[data-bg]').forEach(btn => {
 		btn.addEventListener('click', () => {
 			const type = btn.dataset.bg;
-			document.body.classList.remove('bg-gradient', 'bg-animated', 'bg-plain');
-			document.body.classList.add('bg-' + type);
+			// Remove previous view classes
+			document.body.classList.remove('view-gradient', 'view-animated', 'view-plain');
+			// Add new view class for dynamic content switching
+			document.body.classList.add('view-' + type);
+			// TODO: Switch center and right panel content based on view
+		});
+	});
+
+	// --- Foreground menu options ---
+	document.querySelectorAll('.menu-option[data-fg]').forEach(btn => {
+		btn.addEventListener('click', () => {
+			const type = btn.dataset.fg;
+			if (type === 'buttons') {
+				document.body.classList.remove('view-gradient', 'view-animated', 'view-plain');
+				document.body.classList.add('view-plain');
+			}
+			// TODO: Handle other foreground options
 		});
 	});
 

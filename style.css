@@ -379,7 +379,7 @@ h1 { position: relative; z-index: 2; }
   color: var(--btn-base, white);
   margin-bottom: 16px;
   text-align: center;
-  text-shadow: 0 0 5px rgba(255,255,255,0.5);
+  text-shadow: 0 0 5px var(--btn-base);
 }
 
 .menu-main {
@@ -430,21 +430,60 @@ details[open] .arrow {
   color: var(--accent);
 }
 
-/* Background styles */
-body.bg-gradient {
-  background: linear-gradient(45deg, #111111, #222222);
+/* View indicator in center */
+.view-indicator {
+  display: none;
+  font-size: 3rem;
+  font-weight: bold;
+  text-align: center;
+  color: var(--text);
+  margin-top: 50px;
 }
 
-body.bg-animated {
-  background: linear-gradient(45deg, #111111, #222222);
-  animation: bg-shift 10s ease-in-out infinite;
+.view-indicator::before {
+  content: "Plain";
 }
 
-@keyframes bg-shift {
-  0%, 100% { background: linear-gradient(45deg, #111111, #222222); }
-  50% { background: linear-gradient(45deg, #222222, #111111); }
+body.view-gradient .view-indicator::before {
+  content: "Gradient";
 }
 
-body.bg-plain {
-  background: #111111;
+body.view-animated .view-indicator::before {
+  content: "Animated";
+}
+
+/* Hide button grid when not in plain view */
+body:not(.view-plain) .button-grid {
+  display: none;
+}
+
+body:not(.view-plain) .right-top {
+  display: none;
+}
+
+body:not(.view-plain) .right-bottom {
+  display: none;
+}
+
+/* Right panel view title */
+.right-view-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-align: center;
+  color: var(--text);
+  margin-bottom: 8px;
+  padding: 8px;
+  background: var(--panel-right-bg);
+}
+
+.right-view-title::before {
+  content: "Plain";
+}
+
+body.view-gradient .right-view-title::before {
+  content: "Gradient";
+}
+
+body.view-animated .right-view-title::before {
+  content: "Animated";
 }
