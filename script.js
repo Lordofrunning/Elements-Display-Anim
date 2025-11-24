@@ -135,14 +135,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		// mouseenter: start effect
 		el.addEventListener('mouseenter', () => {
-			// Shimmer (btn-6) uses its own forward/reverse classes; don't add .auto there
+			// Shimmer (btn-6) uses transition to go to 150%
 			if (cfg.selector === '.btn-6') {
-				el.classList.remove('shimmer-reverse');
-				el.classList.remove('shimmer-forward');
-				// force reflow
-				// eslint-disable-next-line no-unused-expressions
-				el.offsetWidth;
-				el.classList.add('shimmer-forward');
+				el.classList.add('shimmer-go');
 				return;
 			}
 
@@ -162,12 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		// mouseleave: stop or reverse effect
 		el.addEventListener('mouseleave', () => {
 			if (cfg.selector === '.btn-6') {
-				el.classList.remove('shimmer-forward');
-				// force reflow
-				// eslint-disable-next-line no-unused-expressions
-				el.offsetWidth;
-				el.classList.add('shimmer-reverse');
-				setTimeout(() => el.classList.remove('shimmer-reverse'), 650);
+				el.classList.remove('shimmer-go');
 				return;
 			}
 
@@ -199,18 +189,8 @@ document.addEventListener('DOMContentLoaded', () => {
 			const trigger = () => {
 				// Shimmer (btn-6) plays forward then reverse
 				if (cfg.selector === '.btn-6') {
-					el.classList.remove('shimmer-reverse');
-					el.classList.remove('shimmer-forward');
-					// force reflow
-					// eslint-disable-next-line no-unused-expressions
-					el.offsetWidth;
-					el.classList.add('shimmer-forward');
-					// remove forward after duration and play reverse to return
-					setTimeout(() => {
-						el.classList.remove('shimmer-forward');
-						el.classList.add('shimmer-reverse');
-						setTimeout(() => el.classList.remove('shimmer-reverse'), cfg.duration + 50);
-					}, cfg.duration);
+					el.classList.add('shimmer-go');
+					setTimeout(() => el.classList.remove('shimmer-go'), 600);
 					return;
 				}
 
@@ -250,6 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			el.classList.remove('shimmer-reverse');
 			el.classList.remove('pulse-out');
 			el.classList.remove('pulse-in');
+			el.classList.remove('shimmer-go');
 		});
 	}
 
