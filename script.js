@@ -122,7 +122,10 @@ document.addEventListener('DOMContentLoaded', () => {
         'btn-4': { selector: '.btn-4', duration: 600, interval: 3000, initialDelay: 360 },
         // Bob has its own slower loop and longer duration
         'btn-5': { selector: '.btn-5', duration: 2800, interval: 4200, initialDelay: 600 },
-        'btn-6': { selector: '.btn-6', duration: 700, interval: 3000, initialDelay: 480 }
+        'btn-6': { selector: '.btn-6', duration: 700, interval: 3000, initialDelay: 480 },
+        'btn-7': { selector: '.btn-7', duration: 0, interval: 3000, initialDelay: 720 },
+        'btn-8': { selector: '.btn-8', duration: 0, interval: 3000, initialDelay: 840 },
+        'btn-9': { selector: '.btn-9', duration: 0, interval: 3000, initialDelay: 960 }
     };
 
 	// Create hover-based handlers for each button so effects only run on mouse interaction
@@ -143,6 +146,15 @@ document.addEventListener('DOMContentLoaded', () => {
 				return;
 			}
 
+			// For glow buttons (btn-7,8,9), if toggle off, pulse out on hover
+			if (['.btn-7', '.btn-8', '.btn-9'].includes(cfg.selector)) {
+				if (!animToggle.checked) {
+					el.classList.remove('pulse-in');
+					el.classList.add('pulse-out');
+				}
+				return;
+			}
+
 			// For other buttons, toggle the .auto class while hovered so CSS animations fire
 			el.classList.add('auto');
 		});
@@ -156,6 +168,15 @@ document.addEventListener('DOMContentLoaded', () => {
 				el.offsetWidth;
 				el.classList.add('shimmer-reverse');
 				setTimeout(() => el.classList.remove('shimmer-reverse'), 650);
+				return;
+			}
+
+			// For glow buttons, if toggle off, pulse in on leave
+			if (['.btn-7', '.btn-8', '.btn-9'].includes(cfg.selector)) {
+				if (!animToggle.checked) {
+					el.classList.remove('pulse-out');
+					el.classList.add('pulse-in');
+				}
 				return;
 			}
 
@@ -193,6 +214,12 @@ document.addEventListener('DOMContentLoaded', () => {
 					return;
 				}
 
+				// For glow buttons (btn-7,8,9), add .auto for infinite pulse
+				if (['.btn-7', '.btn-8', '.btn-9'].includes(cfg.selector)) {
+					el.classList.add('auto');
+					return; // don't remove, infinite
+				}
+
 				// other buttons: add .auto briefly
 				el.classList.add('auto');
 				setTimeout(() => el.classList.remove('auto'), cfg.duration);
@@ -221,6 +248,8 @@ document.addEventListener('DOMContentLoaded', () => {
 			el.classList.remove('auto');
 			el.classList.remove('shimmer-forward');
 			el.classList.remove('shimmer-reverse');
+			el.classList.remove('pulse-out');
+			el.classList.remove('pulse-in');
 		});
 	}
 

@@ -61,6 +61,7 @@ h1 {
   top: 0;
   bottom: 0;
   width: 10%;
+  min-width: 180px;
   padding: 16px;
   box-sizing: border-box;
   color: var(--text);
@@ -89,11 +90,8 @@ h1 {
 
 /* Right panel split into equal top/bottom halves with divider at midpoint */
 .right-panel { display:flex; flex-direction:column; }
-.right-panel .right-top { flex:1; overflow-y:auto; padding-bottom:8px; }
-.right-panel .right-bottom { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding-top:8px; }
-
-/* make the divider span across the panel area and be visible even in narrow width */
-.right-panel > .panel-divider { width: 80%; height: 3px; margin: 0 auto; }
+.right-panel .right-top { flex:1; overflow:hidden; padding-bottom:8px; }
+.right-panel .right-bottom { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding-top:8px; border-top: 1px solid var(--panel-divider); }
 
 /* Simple toggle styling that fits narrow panel */
 .toggle-wrap { display:flex; align-items:center; gap:8px; }
@@ -271,11 +269,17 @@ h1 { position: relative; z-index: 2; }
   /* subtle constant glow */
   box-shadow: 0 0 8px 2px var(--btn-7);
 }
+.btn-7:hover {
+  box-shadow: 0 0 12px 3px var(--btn-7);
+}
 .btn-8 {
   background: var(--btn-8);
   color: var(--btn-8-text, var(--text));
   /* medium constant glow */
   box-shadow: 0 0 14px 4px var(--btn-8);
+}
+.btn-8:hover {
+  box-shadow: 0 0 18px 5px var(--btn-8);
 }
 .btn-9 {
   background: var(--btn-9);
@@ -283,6 +287,60 @@ h1 { position: relative; z-index: 2; }
   /* high-intensity constant glow */
   box-shadow: 0 0 24px 6px var(--btn-9);
 }
+.btn-9:hover {
+  box-shadow: 0 0 30px 8px var(--btn-9);
+}
+
+/* Pulsing glow animations for auto mode */
+@keyframes glow-pulse-7 {
+  0%, 100% { box-shadow: 0 0 8px 2px var(--btn-7); }
+  50% { box-shadow: 0 0 24px 8px var(--btn-7); }
+}
+@keyframes glow-pulse-8 {
+  0%, 100% { box-shadow: 0 0 14px 4px var(--btn-8); }
+  50% { box-shadow: 0 0 30px 10px var(--btn-8); }
+}
+@keyframes glow-pulse-9 {
+  0%, 100% { box-shadow: 0 0 24px 6px var(--btn-9); }
+  50% { box-shadow: 0 0 40px 12px var(--btn-9); }
+}
+
+.btn-7.auto { animation: glow-pulse-7 2s ease-in-out infinite; }
+.btn-8.auto { animation: glow-pulse-8 2s ease-in-out infinite; }
+.btn-9.auto { animation: glow-pulse-9 2s ease-in-out infinite; }
+
+/* Hover pulse animations for glow buttons (when toggle off) */
+@keyframes pulse-out-7 {
+  0% { box-shadow: 0 0 8px 2px var(--btn-7); }
+  100% { box-shadow: 0 0 24px 8px var(--btn-7); }
+}
+@keyframes pulse-in-7 {
+  0% { box-shadow: 0 0 24px 8px var(--btn-7); }
+  100% { box-shadow: 0 0 8px 2px var(--btn-7); }
+}
+@keyframes pulse-out-8 {
+  0% { box-shadow: 0 0 14px 4px var(--btn-8); }
+  100% { box-shadow: 0 0 30px 10px var(--btn-8); }
+}
+@keyframes pulse-in-8 {
+  0% { box-shadow: 0 0 30px 10px var(--btn-8); }
+  100% { box-shadow: 0 0 14px 4px var(--btn-8); }
+}
+@keyframes pulse-out-9 {
+  0% { box-shadow: 0 0 24px 6px var(--btn-9); }
+  100% { box-shadow: 0 0 40px 12px var(--btn-9); }
+}
+@keyframes pulse-in-9 {
+  0% { box-shadow: 0 0 40px 12px var(--btn-9); }
+  100% { box-shadow: 0 0 24px 6px var(--btn-9); }
+}
+
+.btn-7.pulse-out { animation: pulse-out-7 1s ease-in-out forwards; }
+.btn-7.pulse-in { animation: pulse-in-7 1s ease-in-out forwards; }
+.btn-8.pulse-out { animation: pulse-out-8 1s ease-in-out forwards; }
+.btn-8.pulse-in { animation: pulse-in-8 1s ease-in-out forwards; }
+.btn-9.pulse-out { animation: pulse-out-9 1s ease-in-out forwards; }
+.btn-9.pulse-in { animation: pulse-in-9 1s ease-in-out forwards; }
 
 /* shimmer animation for btn-6: used both on hover (via transition) and by .auto (via animation) */
 .btn-6::after {
