@@ -5,15 +5,13 @@ document.addEventListener('DOMContentLoaded', () => {
 	document.body.classList.add('view-plain');
 
 	const targets = {
-		all: ['--btn-1','--btn-3','--btn-4','--btn-5','--btn-6','--btn-7','--btn-8','--btn-9','--btn-base','--panel-divider'],
+		all: ['--btn-1','--btn-3','--btn-4','--btn-5','--btn-6','--btn-7','--panel-divider'],
 		btn1: ['--btn-1'],
 		btn3: ['--btn-3'],
 		btn4: ['--btn-4'],
 		btn5: ['--btn-5'],
 		btn6: ['--btn-6'],
 		btn7: ['--btn-7'],
-		btn8: ['--btn-8'],
-		btn9: ['--btn-9'],
 		'left-panel': ['--panel-left-bg','--panel-divider'],
 		'right-panel': ['--panel-right-bg'],
 		text: ['--text'],
@@ -126,9 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Bob has its own slower loop and longer duration
         'btn-5': { selector: '.btn-5', duration: 2800, interval: 4200, initialDelay: 600 },
         'btn-6': { selector: '.btn-6', duration: 700, interval: 3000, initialDelay: 480 },
-        'btn-7': { selector: '.btn-7', duration: 0, interval: 3000, initialDelay: 720 },
-        'btn-8': { selector: '.btn-8', duration: 0, interval: 3000, initialDelay: 840 },
-        'btn-9': { selector: '.btn-9', duration: 0, interval: 3000, initialDelay: 960 }
+        'btn-7': { selector: '.btn-7', duration: 0, interval: 3000, initialDelay: 720 }
     };
 
 	// Create hover-based handlers for each button so effects only run on mouse interaction

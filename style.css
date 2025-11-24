@@ -11,8 +11,6 @@
   --btn-5: var(--btn-base);
   --btn-6: var(--btn-base);
   --btn-7: var(--btn-base);
-  --btn-8: var(--btn-base);
-  --btn-9: var(--btn-base);
   /* per-button text contrast (computed by JS when colors change). If unset, falls back to --text */
   --btn-1-text: var(--text);
   /* --btn-2 removed */
@@ -21,8 +19,6 @@
   --btn-5-text: var(--text);
   --btn-6-text: var(--text);
   --btn-7-text: var(--text);
-  --btn-8-text: var(--text);
-  --btn-9-text: var(--text);
   /* bob shadow default: use subtle white/grey (assumes dark background) */
   --btn-5-shadow: rgba(255,255,255,0.12);
   /* divider line inside left panel (follows theme) */
@@ -96,7 +92,7 @@ h1 {
 .right-divider {
   width: 100%;
   height: 3px;
-  background: var(--btn-base);
+  background: var(--panel-divider);
   margin: 0;
 }
 
@@ -141,8 +137,37 @@ h1 { position: relative; z-index: 2; }
   margin-top:6px;
 }
 
+.panel input[type="color"] {
+  margin-top: 20px;
+  -webkit-appearance: none;
+  appearance: none;
+  border: none;
+  border-radius: 11px;
+  width: 90px;
+  height: 22.5px;
+  cursor: pointer;
+  background: none;
+}
+
+.color-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.color-picker-row label {
+  margin-top: 0;
+  margin-bottom: 0;
+  font-size: 1.1rem;
+}
+
+.panel label[for="color-picker"] {
+  padding-top: 20px;
+}
+
 /* buttons row inside panel: side-by-side but constrained */
-.panel .panel-buttons { display:flex; gap:8px; margin-top:10px; }
+.panel .panel-buttons { display:flex; gap:8px; margin-top:30px; }
 .panel .panel-buttons .btn { flex:1; font-size:0.9rem; padding:8px 10px; background: rgba(255,255,255,0.2); color: white; box-shadow: 0 0 5px var(--btn-base); transition: transform 0.2s ease, box-shadow 0.2s ease; }
 .panel .panel-buttons .btn:hover { transform: translateY(-2px); box-shadow: 0 0 8px var(--btn-base); }
 
@@ -280,42 +305,14 @@ h1 { position: relative; z-index: 2; }
 .btn-7:hover {
   box-shadow: 0 0 12px 3px var(--btn-7);
 }
-.btn-8 {
-  background: var(--btn-8);
-  color: var(--btn-8-text, var(--text));
-  /* medium constant glow */
-  box-shadow: 0 0 14px 4px var(--btn-8);
-}
-.btn-8:hover {
-  box-shadow: 0 0 18px 5px var(--btn-8);
-}
-.btn-9 {
-  background: var(--btn-9);
-  color: var(--btn-9-text, var(--text));
-  /* high-intensity constant glow */
-  box-shadow: 0 0 24px 6px var(--btn-9);
-}
-.btn-9:hover {
-  box-shadow: 0 0 30px 8px var(--btn-9);
-}
 
 /* Pulsing glow animations for auto mode */
 @keyframes glow-pulse-7 {
   0%, 100% { box-shadow: 0 0 8px 2px var(--btn-7); }
   50% { box-shadow: 0 0 24px 8px var(--btn-7); }
 }
-@keyframes glow-pulse-8 {
-  0%, 100% { box-shadow: 0 0 14px 4px var(--btn-8); }
-  50% { box-shadow: 0 0 30px 10px var(--btn-8); }
-}
-@keyframes glow-pulse-9 {
-  0%, 100% { box-shadow: 0 0 24px 6px var(--btn-9); }
-  50% { box-shadow: 0 0 40px 12px var(--btn-9); }
-}
 
 .btn-7.auto { animation: glow-pulse-7 2s ease-in-out infinite; }
-.btn-8.auto { animation: glow-pulse-8 2s ease-in-out infinite; }
-.btn-9.auto { animation: glow-pulse-9 2s ease-in-out infinite; }
 
 /* Hover pulse animations for glow buttons (when toggle off) */
 @keyframes pulse-out-7 {
@@ -326,29 +323,9 @@ h1 { position: relative; z-index: 2; }
   0% { box-shadow: 0 0 24px 8px var(--btn-7); }
   100% { box-shadow: 0 0 8px 2px var(--btn-7); }
 }
-@keyframes pulse-out-8 {
-  0% { box-shadow: 0 0 14px 4px var(--btn-8); }
-  100% { box-shadow: 0 0 30px 10px var(--btn-8); }
-}
-@keyframes pulse-in-8 {
-  0% { box-shadow: 0 0 30px 10px var(--btn-8); }
-  100% { box-shadow: 0 0 14px 4px var(--btn-8); }
-}
-@keyframes pulse-out-9 {
-  0% { box-shadow: 0 0 24px 6px var(--btn-9); }
-  100% { box-shadow: 0 0 40px 12px var(--btn-9); }
-}
-@keyframes pulse-in-9 {
-  0% { box-shadow: 0 0 40px 12px var(--btn-9); }
-  100% { box-shadow: 0 0 24px 6px var(--btn-9); }
-}
 
 .btn-7.pulse-out { animation: pulse-out-7 1s ease-in-out forwards; }
 .btn-7.pulse-in { animation: pulse-in-7 1s ease-in-out forwards; }
-.btn-8.pulse-out { animation: pulse-out-8 1s ease-in-out forwards; }
-.btn-8.pulse-in { animation: pulse-in-8 1s ease-in-out forwards; }
-.btn-9.pulse-out { animation: pulse-out-9 1s ease-in-out forwards; }
-.btn-9.pulse-in { animation: pulse-in-9 1s ease-in-out forwards; }
 
 /* shimmer animation for btn-6: smooth transition on left */
 .btn-6::after {
