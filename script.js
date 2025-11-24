@@ -1,6 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
 	const root = document.documentElement;
 
+	// Set default background
+	document.body.classList.add('bg-plain');
+
 	const targets = {
 		all: ['--btn-1','--btn-3','--btn-4','--btn-5','--btn-6','--btn-7','--btn-8','--btn-9','--btn-base','--panel-divider'],
 		btn1: ['--btn-1'],
@@ -246,5 +249,14 @@ document.addEventListener('DOMContentLoaded', () => {
 			}
 		});
 	}
+
+	// --- Background menu options ---
+	document.querySelectorAll('.menu-option[data-bg]').forEach(btn => {
+		btn.addEventListener('click', () => {
+			const type = btn.dataset.bg;
+			document.body.classList.remove('bg-gradient', 'bg-animated', 'bg-plain');
+			document.body.classList.add('bg-' + type);
+		});
+	});
 
 });

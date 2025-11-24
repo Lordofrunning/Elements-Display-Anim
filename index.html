@@ -9,7 +9,25 @@
 <body>
   <h1>Button Showcase</h1>
   <div class="layout">
-    <aside class="panel left-panel" aria-label="left panel"></aside>
+    <aside class="panel left-panel" aria-label="left panel">
+      <div class="menu">
+        <h3 class="menu-title">Menu</h3>
+        <details class="menu-group">
+          <summary class="menu-main"><span class="arrow">▶</span> Background</summary>
+          <div class="menu-options">
+            <button class="menu-option" data-bg="gradient">Gradient</button>
+            <button class="menu-option" data-bg="animated">Animated</button>
+            <button class="menu-option" data-bg="plain">Plain</button>
+          </div>
+        </details>
+        <details class="menu-group">
+          <summary class="menu-main"><span class="arrow">▶</span> Foreground</summary>
+          <div class="menu-options">
+            <!-- Foreground options to be added -->
+          </div>
+        </details>
+      </div>
+    </aside>
 
     <main class="main-panel">
       <div class="button-grid">
