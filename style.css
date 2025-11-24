@@ -22,7 +22,7 @@
   /* bob shadow default: use subtle white/grey (assumes dark background) */
   --btn-5-shadow: rgba(255,255,255,0.12);
   /* divider line inside left panel (follows theme) */
-  --panel-divider: rgba(255,255,255,0.12);
+  --panel-divider: var(--btn-base);
   /* button sizing and responsive gap */
   --btn-height: 60px; /* reduced base height (2x smaller) */
   --btn-max-height: 120px; /* maximum button tile height when space allows */
@@ -128,17 +128,35 @@ h1 { position: relative; z-index: 2; }
 
 /* Panel form controls: ensure they fit inside narrow 10% panels */
 .panel label { display:block; margin-top:12px; font-size:0.85rem; }
-.panel select,
-.panel input[type="color"],
-.panel input[type="text"] {
+.panel select {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  margin-top:6px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 20px;
+  padding: 8px 12px;
+  color: var(--text);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.panel select option {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.panel select:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.panel select:focus {
+  outline: none;
+  box-shadow: 0 0 5px var(--btn-base);
 }
 
 .panel input[type="color"] {
-  margin-top: 20px;
   -webkit-appearance: none;
   appearance: none;
   border: none;
@@ -147,24 +165,42 @@ h1 { position: relative; z-index: 2; }
   height: 22.5px;
   cursor: pointer;
   background: none;
+  flex: 1;
+  margin-top: 0;
 }
 
 .color-picker-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 12px;
+  margin-top: 32px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 8px 12px;
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 0 5px var(--btn-base);
+}
+
+.color-picker-row:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 0 8px var(--btn-base);
 }
 
 .color-picker-row label {
   margin-top: 0;
   margin-bottom: 0;
   font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
 }
 
-.panel label[for="color-picker"] {
-  padding-top: 20px;
-}
+
 
 /* buttons row inside panel: side-by-side but constrained */
 .panel .panel-buttons { display:flex; gap:8px; margin-top:30px; }
@@ -335,9 +371,10 @@ h1 { position: relative; z-index: 2; }
   left: -100%;
   width: 50%;
   height: 100%;
-  background: rgba(0,0,0,0.3);
+  background: var(--btn-6-text);
+  opacity: 0.3;
   transform: skewX(-20deg);
-  transition: left 0.6s linear;
+  transition: left 0.375s linear;
 }
 
 .btn-6.shimmer-go::after {
@@ -394,7 +431,7 @@ details[open] .arrow {
   display: block;
   background: none;
   border: none;
-  color: white;
+  color: var(--btn-base);
   font-size: 0.9rem;
   cursor: pointer;
   margin-bottom: 4px;

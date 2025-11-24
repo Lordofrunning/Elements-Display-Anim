@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	document.body.classList.add('view-plain');
 
 	const targets = {
-		all: ['--btn-1','--btn-3','--btn-4','--btn-5','--btn-6','--btn-7','--panel-divider'],
+		all: ['--btn-1','--btn-3','--btn-4','--btn-5','--btn-6','--btn-7','--panel-divider','--btn-base'],
 		btn1: ['--btn-1'],
 		btn3: ['--btn-3'],
 		btn4: ['--btn-4'],
@@ -268,6 +268,11 @@ document.addEventListener('DOMContentLoaded', () => {
 			}
 			// TODO: Handle other foreground options
 		});
+	});
+
+	// Make the whole color picker button clickable
+	document.querySelector('.color-picker-row').addEventListener('click', () => {
+		document.getElementById('color-picker').click();
 	});
 
 });
