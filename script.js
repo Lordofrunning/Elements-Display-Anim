@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	document.body.classList.add('view-plain');
 
 	const targets = {
-		all: ['--btn-1','--btn-3','--btn-4','--btn-5','--btn-6','--btn-7','--btn-base','--btn-8','--btn-9'],
+		all: ['--btn-1','--btn-3','--btn-4','--btn-5','--btn-6','--btn-7','--btn-base','--btn-8','--btn-9','--btn-10','--btn-11','--btn-12','--btn-13'],
 		btn1: ['--btn-1'],
 		btn3: ['--btn-3'],
 		btn4: ['--btn-4'],
@@ -14,11 +14,54 @@ document.addEventListener('DOMContentLoaded', () => {
 		btn7: ['--btn-7'],
 		btn8: ['--btn-8'],
 		btn9: ['--btn-9'],
+		btn10: ['--btn-10'],
+		btn11: ['--btn-11'],
+		btn12: ['--btn-12'],
+		btn13: ['--btn-13'],
 		'left-panel': ['--panel-left-bg','--panel-divider'],
 		'right-panel': ['--panel-right-bg'],
 		text: ['--text'],
 		accent: ['--accent']
 	};
+
+	// Create strips for btn-12
+	const btn12 = document.querySelector('.btn-12');
+	for(let i = 0; i < 10; i++) {
+		const strip = document.createElement('div');
+		strip.classList.add('strip');
+		strip.style.left = (i * 10) + '%';
+		strip.style.width = '10%';
+		btn12.appendChild(strip);
+	}
+
+	// Disintegrate effect for btn-12
+	btn12.addEventListener('mouseenter', () => {
+		const strips = btn12.querySelectorAll('.strip');
+		btn12.addEventListener('mousemove', (e) => {
+			const rect = btn12.getBoundingClientRect();
+			const x = e.clientX - rect.left;
+			const index = Math.floor(x / (rect.width / 10));
+			strips.forEach((strip, i) => {
+				if (Math.abs(i - index) <= 1) {
+					if (i % 2 === 0) {
+						strip.classList.add('slide-up');
+					} else {
+						strip.classList.add('slide-down');
+					}
+				} else {
+					strip.classList.remove('slide-up');
+					strip.classList.remove('slide-down');
+				}
+			});
+		});
+	});
+	btn12.addEventListener('mouseleave', () => {
+		const strips = btn12.querySelectorAll('.strip');
+		strips.forEach(strip => {
+			strip.classList.remove('slide-up');
+			strip.classList.remove('slide-down');
+		});
+	});
 
 	// collect unique variable names and store defaults
 	const uniqueVars = [...new Set(Object.values(targets).flat())];
@@ -126,7 +169,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Bob has its own slower loop and longer duration
         'btn-5': { selector: '.btn-5', duration: 2800, interval: 4200, initialDelay: 600 },
         'btn-6': { selector: '.btn-6', duration: 700, interval: 3000, initialDelay: 480 },
-        'btn-7': { selector: '.btn-7', duration: 0, interval: 3000, initialDelay: 720 }
+        'btn-7': { selector: '.btn-7', duration: 0, interval: 3000, initialDelay: 720 },
+        'btn-11': { selector: '.btn-11', duration: 500, interval: 3000, initialDelay: 0 }
     };
 
 	// Create hover-based handlers for each button so effects only run on mouse interaction
@@ -138,6 +182,11 @@ document.addEventListener('DOMContentLoaded', () => {
 		el.addEventListener('mouseenter', () => {
 			// Shimmer (btn-6) uses transition to go to 150%
 			if (cfg.selector === '.btn-6') {
+				el.classList.add('shimmer-go');
+				return;
+			}
+
+			if (cfg.selector === '.btn-11') {
 				el.classList.add('shimmer-go');
 				return;
 			}
@@ -158,6 +207,11 @@ document.addEventListener('DOMContentLoaded', () => {
 		// mouseleave: stop or reverse effect
 		el.addEventListener('mouseleave', () => {
 			if (cfg.selector === '.btn-6') {
+				el.classList.remove('shimmer-go');
+				return;
+			}
+
+			if (cfg.selector === '.btn-11') {
 				el.classList.remove('shimmer-go');
 				return;
 			}
@@ -192,6 +246,12 @@ document.addEventListener('DOMContentLoaded', () => {
 				if (cfg.selector === '.btn-6') {
 					el.classList.add('shimmer-go');
 					setTimeout(() => el.classList.remove('shimmer-go'), 600);
+					return;
+				}
+
+				if (cfg.selector === '.btn-11') {
+					el.classList.add('shimmer-go');
+					setTimeout(() => el.classList.remove('shimmer-go'), 500);
 					return;
 				}
 
