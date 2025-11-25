@@ -316,7 +316,120 @@ document.addEventListener('DOMContentLoaded', () => {
 			document.body.classList.remove('view-gradient', 'view-animated', 'view-plain');
 			// Add new view class for dynamic content switching
 			document.body.classList.add('view-' + type);
-			// TODO: Switch center and right panel content based on view
+
+			// Dynamically update center content
+			const buttonGrid = document.querySelector('.button-grid');
+			const viewIndicator = document.querySelector('.view-indicator');
+			if (type === 'animated') {
+				buttonGrid.style.display = 'none';
+				viewIndicator.style.display = 'block';
+				viewIndicator.textContent = 'Animated Background';
+			} else {
+				buttonGrid.style.display = 'grid';
+				viewIndicator.style.display = 'none';
+			}
+
+			// Dynamically update right panel content
+			const rightTop = document.querySelector('.right-top');
+			if (type === 'animated') {
+				rightTop.innerHTML = `
+					<h3>Type</h3>
+					<div class="shape-picker-row">
+						<label>Shape
+							<span class="shape-icon">■</span>
+						</label>
+					</div>
+				`;
+			} else if (type === 'plain') {
+				rightTop.innerHTML = `
+					<h2>Theme Switcher</h2>
+					<label for="target-select">Filter</label>
+					<select id="target-select">
+						<option value="all">All Buttons</option>
+						<option value="btn1">Pulse</option>
+						<option value="btn3">Glow</option>
+						<option value="btn4">Bounce</option>
+						<option value="btn5">Bob</option>
+						<option value="btn6">Shimmer</option>
+						<option value="btn7">Subtle Glow</option>
+						<option value="btn8">Particle Explosion</option>
+						<option value="btn9">Loading Morph</option>
+						<option value="btn10">3D Push</option>
+						<option value="btn11">Glassmorphic</option>
+						<option value="btn12">Disintegrate</option>
+						<option value="btn13">Gradient Fill</option>
+						<option value="btn9">High Glow</option>
+						<option value="left-panel">Left Panel</option>
+						<option value="right-panel">Right Panel</option>
+						<option value="text">Text Color</option>
+						<option value="accent">Accent</option>
+					</select>
+					<div class="color-picker-row">
+						<label>Color
+							<input id="color-picker" type="color" value="#ffffff" />
+						</label>
+					</div>
+					<div class="panel-buttons">
+						<button id="apply-color" class="btn">Apply</button>
+						<button id="reset-colors" class="btn">Reset</button>
+					</div>
+				`;
+				// Re-setup listeners after DOM change
+				setTimeout(() => {
+					const targetSelect = document.getElementById('target-select');
+					const colorPicker = document.getElementById('color-picker');
+					const applyBtn = document.getElementById('apply-color');
+					const resetBtn = document.getElementById('reset-colors');
+
+					if (targetSelect && colorPicker && applyBtn && resetBtn) {
+						function normalizeHex(val) {
+							if (!val) return '#000000';
+							val = val.trim();
+							if (val.startsWith('#')) return val;
+							if (val.startsWith('rgb')) return rgbToHex(val);
+							return val;
+						}
+
+						function updatePicker() {
+							const target = targetSelect.value;
+							const vars = targets[target];
+							if (!vars || vars.length === 0) return;
+							const v = getComputedStyle(root).getPropertyValue(vars[0]).trim();
+							colorPicker.value = normalizeHex(v);
+						}
+
+						applyBtn.addEventListener('click', () => {
+							const color = colorPicker.value;
+							const target = targetSelect.value;
+							const vars = targets[target] || [];
+							vars.forEach(variable => {
+								root.style.setProperty(variable, color);
+								if (variable.startsWith('--btn-')) {
+									const rgb = hexToRgb(normalizeHex(color));
+									const contrast = getContrastColor(rgb.r, rgb.g, rgb.b);
+									root.style.setProperty(variable + '-text', contrast);
+								}
+							});
+						});
+
+						resetBtn.addEventListener('click', () => {
+							Object.entries(defaults).forEach(([k,v]) => {
+								root.style.setProperty(k, v);
+							});
+							updatePicker();
+						});
+
+						targetSelect.addEventListener('change', updatePicker);
+						updatePicker();
+
+						document.querySelector('.color-picker-row').addEventListener('click', () => {
+							document.getElementById('color-picker').click();
+						});
+					}
+				}, 0);
+			} else {
+				rightTop.innerHTML = ''; // blank for gradient
+			}
 		});
 	});
 
@@ -327,6 +440,101 @@ document.addEventListener('DOMContentLoaded', () => {
 			if (type === 'buttons') {
 				document.body.classList.remove('view-gradient', 'view-animated', 'view-plain');
 				document.body.classList.add('view-plain');
+
+				// Dynamically update center content
+				const buttonGrid = document.querySelector('.button-grid');
+				const viewIndicator = document.querySelector('.view-indicator');
+				buttonGrid.style.display = 'grid';
+				viewIndicator.style.display = 'none';
+
+				// Dynamically update right panel content
+				const rightTop = document.querySelector('.right-top');
+				rightTop.innerHTML = `
+					<h2>Theme Switcher</h2>
+					<label for="target-select">Filter</label>
+					<select id="target-select">
+						<option value="all">All Buttons</option>
+						<option value="btn1">Pulse</option>
+						<option value="btn3">Glow</option>
+						<option value="btn4">Bounce</option>
+						<option value="btn5">Bob</option>
+						<option value="btn6">Shimmer</option>
+						<option value="btn7">Subtle Glow</option>
+						<option value="btn8">Particle Explosion</option>
+						<option value="btn9">Loading Morph</option>
+						<option value="btn10">3D Push</option>
+						<option value="btn11">Glassmorphic</option>
+						<option value="btn12">Disintegrate</option>
+						<option value="btn13">Gradient Fill</option>
+						<option value="btn9">High Glow</option>
+						<option value="left-panel">Left Panel</option>
+						<option value="right-panel">Right Panel</option>
+						<option value="text">Text Color</option>
+						<option value="accent">Accent</option>
+					</select>
+					<div class="color-picker-row">
+						<label>Color
+							<input id="color-picker" type="color" value="#ffffff" />
+						</label>
+					</div>
+					<div class="panel-buttons">
+						<button id="apply-color" class="btn">Apply</button>
+						<button id="reset-colors" class="btn">Reset</button>
+					</div>
+				`;
+				// Re-setup listeners after DOM change
+				setTimeout(() => {
+					const targetSelect = document.getElementById('target-select');
+					const colorPicker = document.getElementById('color-picker');
+					const applyBtn = document.getElementById('apply-color');
+					const resetBtn = document.getElementById('reset-colors');
+
+					if (targetSelect && colorPicker && applyBtn && resetBtn) {
+						function normalizeHex(val) {
+							if (!val) return '#000000';
+							val = val.trim();
+							if (val.startsWith('#')) return val;
+							if (val.startsWith('rgb')) return rgbToHex(val);
+							return val;
+						}
+
+						function updatePicker() {
+							const target = targetSelect.value;
+							const vars = targets[target];
+							if (!vars || vars.length === 0) return;
+							const v = getComputedStyle(root).getPropertyValue(vars[0]).trim();
+							colorPicker.value = normalizeHex(v);
+						}
+
+						applyBtn.addEventListener('click', () => {
+							const color = colorPicker.value;
+							const target = targetSelect.value;
+							const vars = targets[target] || [];
+							vars.forEach(variable => {
+								root.style.setProperty(variable, color);
+								if (variable.startsWith('--btn-')) {
+									const rgb = hexToRgb(normalizeHex(color));
+									const contrast = getContrastColor(rgb.r, rgb.g, rgb.b);
+									root.style.setProperty(variable + '-text', contrast);
+								}
+							});
+						});
+
+						resetBtn.addEventListener('click', () => {
+							Object.entries(defaults).forEach(([k,v]) => {
+								root.style.setProperty(k, v);
+							});
+							updatePicker();
+						});
+
+						targetSelect.addEventListener('change', updatePicker);
+						updatePicker();
+
+						document.querySelector('.color-picker-row').addEventListener('click', () => {
+							document.getElementById('color-picker').click();
+						});
+					}
+				}, 0);
 			}
 			// TODO: Handle other foreground options
 		});

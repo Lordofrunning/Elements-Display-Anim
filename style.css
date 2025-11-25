@@ -116,6 +116,14 @@ h1 {
 /* Ensure page heading appears above panels */
 h1 { position: relative; z-index: 2; }
 
+h1::before {
+  content: "Button Showcase";
+}
+
+body.view-animated h1::before {
+  content: "Animated Background";
+}
+
 /* Main content centered and constrained to 50% of the viewport */
 .main-panel {
   width: 50%;
@@ -200,6 +208,42 @@ h1 { position: relative; z-index: 2; }
   background: rgba(255, 255, 255, 0.2);
   transform: translateY(-2px);
   box-shadow: 0 0 8px var(--btn-base);
+}
+
+.shape-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 32px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 8px 12px;
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 0 5px var(--btn-base);
+}
+
+.shape-picker-row:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 0 8px var(--btn-base);
+}
+
+.shape-picker-row label {
+  margin-top: 0;
+  margin-bottom: 0;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.shape-icon {
+  font-size: 1.5rem;
+  color: var(--btn-base);
 }
 
 .color-picker-row label {
@@ -526,27 +570,32 @@ h1 { position: relative; z-index: 2; }
 
 .btn-13 {
   position: relative;
-  background: linear-gradient(to right, #cccccc, var(--btn-13), #333333) border-box;
-  border: 2px solid transparent;
-  background-clip: padding-box;
+  background: transparent;
+  border: 2px solid;
+  border-image: linear-gradient(to right, #cccccc, var(--btn-13), #333333) 1;
   color: var(--btn-13-text);
   overflow: hidden;
+}
+
+.btn-13 .btn-text {
+  position: relative;
+  z-index: 2;
 }
 
 .btn-13::after {
   content: '';
   position: absolute;
-  top: 2px;
-  left: 2px;
+  top: 0;
+  left: 0;
   width: 0;
-  height: calc(100% - 4px);
+  height: 100%;
   background: linear-gradient(to right, #cccccc, var(--btn-13), #333333);
   transition: width 0.5s ease;
   z-index: 1;
 }
 
 .btn-13:hover::after {
-  width: calc(100% - 4px);
+  width: 100%;
 }
 
 .btn-11:hover {
@@ -654,7 +703,7 @@ body.view-gradient .view-indicator::before {
 }
 
 body.view-animated .view-indicator::before {
-  content: "Animated";
+  content: "Animated Background";
 }
 
 /* Hide button grid when not in plain view */
