@@ -19,6 +19,10 @@
   --btn-5-text: var(--text);
   --btn-6-text: var(--text);
   --btn-7-text: var(--text);
+  --btn-8: var(--btn-base);
+  --btn-8-text: var(--text);
+  --btn-9: var(--btn-base);
+  --btn-9-text: var(--text);
   /* bob shadow default: use subtle white/grey (assumes dark background) */
   --btn-5-shadow: rgba(255,255,255,0.12);
   /* divider line inside left panel (follows theme) */
@@ -362,6 +366,47 @@ h1 { position: relative; z-index: 2; }
 
 .btn-7.pulse-out { animation: pulse-out-7 1s ease-in-out forwards; }
 .btn-7.pulse-in { animation: pulse-in-7 1s ease-in-out forwards; }
+
+.btn-8 {
+  background: var(--btn-8);
+  color: var(--btn-8-text, var(--text));
+  position: relative;
+  overflow: visible;
+}
+
+/* Particle explosion animation */
+.particle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--btn-8);
+  animation: explode 1s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes explode {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0); opacity: 0; }
+}
+
+.btn-9 {
+  background: var(--btn-9);
+  color: var(--btn-9-text, var(--text));
+  transition: border-radius 0.3s ease, width 0.3s ease, height 0.3s ease;
+}
+
+.btn-9.loading {
+  border-radius: 50%;
+  width: var(--btn-height);
+  height: var(--btn-height);
+  animation: spin 1s linear infinite;
+  color: transparent; /* hide text */
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 
 /* shimmer animation for btn-6: smooth transition on left */
 .btn-6::after {

@@ -5,13 +5,15 @@ document.addEventListener('DOMContentLoaded', () => {
 	document.body.classList.add('view-plain');
 
 	const targets = {
-		all: ['--btn-1','--btn-3','--btn-4','--btn-5','--btn-6','--btn-7','--panel-divider','--btn-base'],
+		all: ['--btn-1','--btn-3','--btn-4','--btn-5','--btn-6','--btn-7','--btn-base','--btn-8','--btn-9'],
 		btn1: ['--btn-1'],
 		btn3: ['--btn-3'],
 		btn4: ['--btn-4'],
 		btn5: ['--btn-5'],
 		btn6: ['--btn-6'],
 		btn7: ['--btn-7'],
+		btn8: ['--btn-8'],
+		btn9: ['--btn-9'],
 		'left-panel': ['--panel-left-bg','--panel-divider'],
 		'right-panel': ['--panel-right-bg'],
 		text: ['--text'],
@@ -273,6 +275,51 @@ document.addEventListener('DOMContentLoaded', () => {
 	// Make the whole color picker button clickable
 	document.querySelector('.color-picker-row').addEventListener('click', () => {
 		document.getElementById('color-picker').click();
+	});
+
+	// Particle explosion on click
+	document.querySelector('.btn-8').addEventListener('click', (e) => {
+		const btn = e.target;
+		for (let i = 0; i < 40; i++) {
+			const particle = document.createElement('div');
+			particle.classList.add('particle');
+			// Random side: top, bottom, left, right
+			const sides = ['top', 'bottom', 'left', 'right'];
+			const side = sides[Math.floor(Math.random() * 4)];
+			let x, y, angle;
+			if (side === 'top') {
+				x = Math.random() * 100;
+				y = 0;
+				angle = (135 - (x / 100) * 90) * Math.PI / 180; // degrees to radians
+			} else if (side === 'bottom') {
+				x = Math.random() * 100;
+				y = 100;
+				angle = (225 + (x / 100) * 90) * Math.PI / 180;
+			} else if (side === 'left') {
+				x = 0;
+				y = Math.random() * 100;
+				angle = (315 + (y / 100) * 90) * Math.PI / 180;
+			} else {
+				x = 100;
+				y = Math.random() * 100;
+				angle = (135 + (y / 100) * 90) * Math.PI / 180;
+			}
+			particle.style.left = x + '%';
+			particle.style.top = y + '%';
+			const distance = Math.random() * 200 + 50;
+			const dx = Math.cos(angle) * distance;
+			const dy = Math.sin(angle) * distance;
+			particle.style.setProperty('--dx', dx + 'px');
+			particle.style.setProperty('--dy', dy + 'px');
+			btn.appendChild(particle);
+			setTimeout(() => particle.remove(), 1000);
+		}
+	});
+
+	// Loading morph on click
+	document.querySelector('.btn-9').addEventListener('click', (e) => {
+		const btn = e.target;
+		btn.classList.toggle('loading');
 	});
 
 });
