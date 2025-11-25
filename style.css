@@ -392,15 +392,31 @@ h1 { position: relative; z-index: 2; }
 .btn-9 {
   background: var(--btn-9);
   color: var(--btn-9-text, var(--text));
-  transition: border-radius 0.3s ease, width 0.3s ease, height 0.3s ease;
+  transition: filter 0.2s ease;
+}
+
+.btn-9:hover,
+.btn-9.loading {
+  filter: brightness(1.1);
 }
 
 .btn-9.loading {
-  border-radius: 50%;
-  width: var(--btn-height);
-  height: var(--btn-height);
-  animation: spin 1s linear infinite;
   color: transparent; /* hide text */
+  position: relative;
+}
+
+.btn-9.loading::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid transparent;
+  border-top: 2px solid var(--text);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
