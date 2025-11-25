@@ -4,6 +4,9 @@ document.addEventListener('DOMContentLoaded', () => {
 	// Set default view
 	document.body.classList.add('view-plain');
 
+	const h1 = document.querySelector('h1');
+	h1.textContent = 'Button Showcase';
+
 	const targets = {
 		all: ['--btn-1','--btn-3','--btn-4','--btn-5','--btn-6','--btn-7','--btn-base','--btn-8','--btn-9','--btn-10','--btn-11','--btn-12','--btn-13'],
 		btn1: ['--btn-1'],
@@ -319,28 +322,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
 			// Dynamically update center content
 			const buttonGrid = document.querySelector('.button-grid');
-			const viewIndicator = document.querySelector('.view-indicator');
 			if (type === 'animated') {
 				buttonGrid.style.display = 'none';
-				viewIndicator.style.display = 'block';
-				viewIndicator.textContent = 'Animated Background';
+				h1.textContent = 'Animated';
+			} else if (type === 'gradient') {
+				buttonGrid.style.display = 'none';
+				h1.textContent = 'Gradient';
 			} else {
 				buttonGrid.style.display = 'grid';
-				viewIndicator.style.display = 'none';
+				h1.textContent = 'Button Showcase';
 			}
 
 			// Dynamically update right panel content
 			const rightTop = document.querySelector('.right-top');
-			if (type === 'animated') {
-				rightTop.innerHTML = `
-					<h3>Type</h3>
-					<div class="shape-picker-row">
-						<label>Shape
-							<span class="shape-icon">■</span>
-						</label>
-					</div>
-				`;
-			} else if (type === 'plain') {
+			const rightViewTitle = document.querySelector('.right-view-title');
+			if (type === 'plain') {
+				rightViewTitle.textContent = 'Plain';
 				rightTop.innerHTML = `
 					<h2>Theme Switcher</h2>
 					<label for="target-select">Filter</label>
@@ -428,7 +425,8 @@ document.addEventListener('DOMContentLoaded', () => {
 					}
 				}, 0);
 			} else {
-				rightTop.innerHTML = ''; // blank for gradient
+				rightViewTitle.textContent = '';
+				rightTop.innerHTML = ''; // blank for animated and gradient
 			}
 		});
 	});
@@ -443,12 +441,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 				// Dynamically update center content
 				const buttonGrid = document.querySelector('.button-grid');
-				const viewIndicator = document.querySelector('.view-indicator');
 				buttonGrid.style.display = 'grid';
-				viewIndicator.style.display = 'none';
+				h1.textContent = 'Button Showcase';
 
 				// Dynamically update right panel content
 				const rightTop = document.querySelector('.right-top');
+				const rightViewTitle = document.querySelector('.right-view-title');
+				rightViewTitle.textContent = 'Plain';
 				rightTop.innerHTML = `
 					<h2>Theme Switcher</h2>
 					<label for="target-select">Filter</label>
