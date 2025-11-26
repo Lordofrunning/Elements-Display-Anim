@@ -41,6 +41,7 @@
   --btn-max-width: 280px; /* maximum width for a button tile (reduced by 1/3) */
   --btn-gap: clamp(12px, 2.5vw, 48px); /* reactive gap between buttons */
   --btn-padding: clamp(6px, 1.5vw, 20px); /* padding increases when there's more room */
+  --animated-bg: #ffffff;
 }
 
 body {
@@ -125,6 +126,16 @@ h1 { position: relative; z-index: 2; }
   z-index: 1;
   /* keep height driven by content; buttons will have fixed height */
   padding: 12px 0;
+}
+
+/* In animated view, make main-panel fill the entire center area */
+body.view-animated .main-panel {
+  position: absolute;
+  left: 10%;
+  width: 80%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
 }
 
 /* Button grid fills the main panel */
@@ -234,6 +245,116 @@ h1 { position: relative; z-index: 2; }
 }
 
 .shape-icon {
+  font-size: 1.5rem;
+  color: var(--btn-base);
+}
+
+.amount-picker-row,
+.size-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 8px 12px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 0 5px var(--btn-base);
+}
+
+.amount-picker-row:hover,
+.size-picker-row:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 0 8px var(--btn-base);
+}
+
+.amount-picker-row label,
+.size-picker-row label {
+  margin-top: 0;
+  margin-bottom: 0;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.direction-picker-row,
+.pattern-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 8px 12px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 0 5px var(--btn-base);
+}
+
+.direction-picker-row:hover,
+.pattern-picker-row:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 0 8px var(--btn-base);
+}
+
+.direction-picker-row label,
+.pattern-picker-row label {
+  margin-top: 0;
+  margin-bottom: 0;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.direction-picker-row select,
+.pattern-picker-row select {
+  flex: 1;
+  background: var(--panel-right-bg);
+  color: var(--text);
+  border: 1px solid var(--accent);
+  padding: 5px;
+  border-radius: 4px;
+}
+.type-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 32px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 8px 12px;
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 0 5px var(--btn-base);
+}
+.type-picker-row:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 0 8px var(--btn-base);
+}
+
+.type-picker-row label {
+  margin-top: 0;
+  margin-bottom: 0;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.type-icon {
   font-size: 1.5rem;
   color: var(--btn-base);
 }
@@ -732,4 +853,97 @@ body.view-gradient .right-view-title::before {
 
 body.view-animated .right-view-title::before {
   content: "Animated";
+}
+
+/* Animated view styles */
+.animated-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+.floating-shape {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  background: var(--animated-bg);
+  border-radius: 50%;
+  animation: float 3s infinite ease-in-out;
+}
+
+.floating-shape:nth-child(1) {
+  top: 20%;
+  left: 20%;
+  animation-delay: 0s;
+}
+
+.floating-shape:nth-child(2) {
+  top: 50%;
+  left: 60%;
+  animation-delay: 1s;
+}
+
+.floating-shape:nth-child(3) {
+  top: 70%;
+  left: 40%;
+  animation-delay: 2s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+  }
+}
+
+/* Animated lines */
+.animated-line {
+  position: absolute;
+  height: 2px;
+  width: 100px;
+  background: var(--animated-bg);
+  animation: line-sweep 4s infinite linear;
+}
+
+.path-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3); /* darker path */
+  pointer-events: none;
+}
+
+@keyframes line-sweep {
+  0% {
+    transform: translateX(-100px);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes line-sweep-vertical {
+  0% {
+    transform: translateY(-100px);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: -50% 50%; }
+  100% { background-position: 50% 50%; }
+}
+
+@keyframes gradient-shift-vertical {
+  0% { background-position: 50% -50%; }
+  100% { background-position: 50% 50%; }
 }
