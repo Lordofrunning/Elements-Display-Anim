@@ -320,50 +320,36 @@ document.addEventListener('DOMContentLoaded', () => {
 			// Add new view class for dynamic content switching
 			document.body.classList.add('view-' + type);
 
-			// Dynamically update center content
+			// Reset center content
+			h1.textContent = '';
 			const buttonGrid = document.querySelector('.button-grid');
+			buttonGrid.style.display = 'none';
+
+			// Reset right panel content
+			const rightTop = document.querySelector('.right-top');
+			const rightViewTitle = document.querySelector('.right-view-title');
+			rightViewTitle.textContent = '';
+			rightTop.innerHTML = '';
+
+			// Dynamically update center content
 			if (type === 'animated') {
-				buttonGrid.style.display = 'none';
 				h1.textContent = 'Animated';
 			} else if (type === 'gradient') {
-				buttonGrid.style.display = 'none';
 				h1.textContent = 'Gradient';
-			} else {
-				buttonGrid.style.display = 'grid';
-				h1.textContent = 'Button Showcase';
 			}
 
 			// Dynamically update right panel content
-			const rightTop = document.querySelector('.right-top');
-			const rightViewTitle = document.querySelector('.right-view-title');
-			if (type === 'plain') {
-				rightViewTitle.textContent = 'Plain';
+			if (type === 'animated') {
+				rightViewTitle.textContent = 'Animated';
 				rightTop.innerHTML = `
-					<h2>Theme Switcher</h2>
-					<label for="target-select">Filter</label>
-					<select id="target-select">
-						<option value="all">All Buttons</option>
-						<option value="btn1">Pulse</option>
-						<option value="btn3">Glow</option>
-						<option value="btn4">Bounce</option>
-						<option value="btn5">Bob</option>
-						<option value="btn6">Shimmer</option>
-						<option value="btn7">Subtle Glow</option>
-						<option value="btn8">Particle Explosion</option>
-						<option value="btn9">Loading Morph</option>
-						<option value="btn10">3D Push</option>
-						<option value="btn11">Glassmorphic</option>
-						<option value="btn12">Disintegrate</option>
-						<option value="btn13">Gradient Fill</option>
-						<option value="btn9">High Glow</option>
-						<option value="left-panel">Left Panel</option>
-						<option value="right-panel">Right Panel</option>
-						<option value="text">Text Color</option>
-						<option value="accent">Accent</option>
-					</select>
 					<div class="color-picker-row">
 						<label>Color
 							<input id="color-picker" type="color" value="#ffffff" />
+						</label>
+					</div>
+					<div class="shape-picker-row">
+						<label>Shape
+							<span class="shape-icon">■</span>
 						</label>
 					</div>
 					<div class="panel-buttons">
@@ -378,7 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					const applyBtn = document.getElementById('apply-color');
 					const resetBtn = document.getElementById('reset-colors');
 
-					if (targetSelect && colorPicker && applyBtn && resetBtn) {
+					if (colorPicker && applyBtn && resetBtn) {
 						function normalizeHex(val) {
 							if (!val) return '#000000';
 							val = val.trim();
@@ -388,35 +374,53 @@ document.addEventListener('DOMContentLoaded', () => {
 						}
 
 						function updatePicker() {
-							const target = targetSelect.value;
-							const vars = targets[target];
-							if (!vars || vars.length === 0) return;
-							const v = getComputedStyle(root).getPropertyValue(vars[0]).trim();
-							colorPicker.value = normalizeHex(v);
+							if (!targetSelect) {
+								// For animated, update from --bg
+								const v = getComputedStyle(root).getPropertyValue('--bg').trim();
+								colorPicker.value = normalizeHex(v);
+							} else {
+								const target = targetSelect.value;
+								const vars = targets[target];
+								if (!vars || vars.length === 0) return;
+								const v = getComputedStyle(root).getPropertyValue(vars[0]).trim();
+								colorPicker.value = normalizeHex(v);
+							}
 						}
 
 						applyBtn.addEventListener('click', () => {
 							const color = colorPicker.value;
-							const target = targetSelect.value;
-							const vars = targets[target] || [];
-							vars.forEach(variable => {
-								root.style.setProperty(variable, color);
-								if (variable.startsWith('--btn-')) {
-									const rgb = hexToRgb(normalizeHex(color));
-									const contrast = getContrastColor(rgb.r, rgb.g, rgb.b);
-									root.style.setProperty(variable + '-text', contrast);
-								}
-							});
+							if (!targetSelect) {
+								// For animated, apply to --bg
+								root.style.setProperty('--bg', color);
+							} else {
+								const target = targetSelect.value;
+								const vars = targets[target] || [];
+								vars.forEach(variable => {
+									root.style.setProperty(variable, color);
+									if (variable.startsWith('--btn-')) {
+										const rgb = hexToRgb(normalizeHex(color));
+										const contrast = getContrastColor(rgb.r, rgb.g, rgb.b);
+										root.style.setProperty(variable + '-text', contrast);
+									}
+								});
+							}
 						});
 
 						resetBtn.addEventListener('click', () => {
-							Object.entries(defaults).forEach(([k,v]) => {
-								root.style.setProperty(k, v);
-							});
+							if (!targetSelect) {
+								// For animated, reset --bg
+								root.style.setProperty('--bg', '#111111'); // default bg
+							} else {
+								Object.entries(defaults).forEach(([k,v]) => {
+									root.style.setProperty(k, v);
+								});
+							}
 							updatePicker();
 						});
 
-						targetSelect.addEventListener('change', updatePicker);
+						if (targetSelect) {
+							targetSelect.addEventListener('change', updatePicker);
+						}
 						updatePicker();
 
 						document.querySelector('.color-picker-row').addEventListener('click', () => {
@@ -424,9 +428,12 @@ document.addEventListener('DOMContentLoaded', () => {
 						});
 					}
 				}, 0);
+			} else if (type === 'gradient') {
+				rightViewTitle.textContent = 'Gradient';
+				rightTop.innerHTML = '';
 			} else {
 				rightViewTitle.textContent = '';
-				rightTop.innerHTML = ''; // blank for animated and gradient
+				rightTop.innerHTML = ''; // for plain, but plain not here
 			}
 		});
 	});
@@ -439,14 +446,19 @@ document.addEventListener('DOMContentLoaded', () => {
 				document.body.classList.remove('view-gradient', 'view-animated', 'view-plain');
 				document.body.classList.add('view-plain');
 
+				// Reset center content
+				h1.textContent = '';
+				buttonGrid.style.display = 'none';
+
+				// Reset right panel content
+				rightViewTitle.textContent = '';
+				rightTop.innerHTML = '';
+
 				// Dynamically update center content
-				const buttonGrid = document.querySelector('.button-grid');
 				buttonGrid.style.display = 'grid';
 				h1.textContent = 'Button Showcase';
 
 				// Dynamically update right panel content
-				const rightTop = document.querySelector('.right-top');
-				const rightViewTitle = document.querySelector('.right-view-title');
 				rightViewTitle.textContent = 'Plain';
 				rightTop.innerHTML = `
 					<h2>Theme Switcher</h2>

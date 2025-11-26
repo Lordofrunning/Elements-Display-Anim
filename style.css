@@ -25,7 +25,7 @@
   --btn-9-text: var(--text);
   --btn-10: var(--btn-base);
   --btn-10-text: var(--text);
-  --btn-11: #ffffff;
+  --btn-11: var(--btn-base);
   --btn-11-text: var(--text);
   --btn-12: var(--btn-base);
   --btn-12-text: var(--text);
@@ -115,14 +115,6 @@ h1 {
 
 /* Ensure page heading appears above panels */
 h1 { position: relative; z-index: 2; }
-
-h1::before {
-  content: "Button Showcase";
-}
-
-body.view-animated h1::before {
-  content: "Animated Background";
-}
 
 /* Main content centered and constrained to 50% of the viewport */
 .main-panel {
@@ -711,7 +703,7 @@ body:not(.view-plain) .button-grid {
   display: none;
 }
 
-body:not(.view-plain) .right-top {
+body.view-gradient .right-top {
   display: none;
 }
 
