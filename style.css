@@ -1,8 +1,9 @@
 :root {
   --bg: #111111;
   --text: #ffffff;
-  --panel-left-bg: rgba(255, 255, 255, 0.03);
-  --panel-right-bg: rgba(255, 255, 255, 0.03);
+  /* slightly lighter side panels for better contrast */
+  --panel-left-bg: rgba(255, 255, 255, 0.07);
+  --panel-right-bg: rgba(255, 255, 255, 0.06);
   --accent: rgba(255, 255, 255, 0.3);
   --btn-base: #3498db;
   --btn-1: var(--btn-base);
@@ -77,6 +78,7 @@ h1 {
   font-size: 0.9rem;
   overflow-y: auto;
   overflow-x: hidden; /* prevent horizontal overflow */
+  z-index: 3; /* ensure panels sit above center animated content */
 }
 
 .left-panel { left: 0; background: var(--panel-left-bg); }
@@ -130,6 +132,17 @@ h1 { position: relative; z-index: 2; }
   z-index: 1;
   /* keep height driven by content; buttons will have fixed height */
   padding: 12px 0;
+}
+
+/* Explicit plain-view helper: when main-panel should behave as the normal content area
+   this class restores the default centered layout even if other inline styles exist. */
+.main-panel.plain-view {
+  position: relative !important;
+  width: 50% !important;
+  margin: 20px auto !important;
+  padding: 12px 0 !important;
+  height: auto !important;
+  overflow: auto !important;
 }
 
 /* In animated view, make main-panel fill the entire center area */
@@ -879,6 +892,24 @@ body.view-animated .right-view-title::before {
   animation: float 3s infinite ease-in-out;
 }
 
+/* The animated line */
+.moving-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;        /* spans exactly the center content */
+    height: 3px;
+    background: linear-gradient(90deg, transparent, white, transparent);
+    animation: line-move 2s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes line-move {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+
 .floating-shape:nth-child(1) {
   top: 20%;
   left: 20%;
@@ -976,4 +1007,15 @@ body.view-animated .right-view-title::before {
 @keyframes sweep {
   0% { background-position: -100% 50%; }
   100% { background-position: 200% 50%; }
+}
+
+/* simple static test line (no animation) */
+.static-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 8px; /* slightly below header inside mainPanel */
+  height: 2px;
+  background: #ffffff;
+  z-index: 2;
 }

@@ -29,6 +29,11 @@ document.addEventListener('DOMContentLoaded', () => {
 	mainPanel.innerHTML = buttonGridHTML;
 	setupButtons();
 
+	// debugging: top-level load
+	console.log('[animated] script loaded');
+
+	let lastBgType = null;
+
 	const targets = {
 		all: ['--btn-1','--btn-3','--btn-4','--btn-5','--btn-6','--btn-7','--btn-base','--btn-8','--btn-9','--btn-10','--btn-11','--btn-12','--btn-13'],
 		btn1: ['--btn-1'],
@@ -388,6 +393,8 @@ document.addEventListener('DOMContentLoaded', () => {
 	document.querySelectorAll('.menu-option[data-bg]').forEach(btn => {
 		btn.addEventListener('click', () => {
 			const type = btn.dataset.bg;
+                console.log('[animated] menu click, type=', type);
+                lastBgType = type;
 			// Remove previous view classes
 			document.body.classList.remove('view-gradient', 'view-animated', 'view-plain');
 			// Add new view class for dynamic content switching
@@ -403,11 +410,65 @@ document.addEventListener('DOMContentLoaded', () => {
 			rightViewTitle.textContent = '';
 			rightTop.innerHTML = '';
 
+			// If switching away from Animated, clear any inline sizing applied previously
+			if (type !== 'animated') {
+				// remove any inline styles that animated view applied
+				['position','left','top','width','height','margin','padding','overflow'].forEach(p => mainPanel.style[p] = '');
+				// restore helper class so plain view layout is enforced
+				mainPanel.classList.add('plain-view');
+			}
+
 			// Dynamically update center content
 			if (type === 'animated') {
+				// animated view uses its own layout; remove plain-view helper
+				mainPanel.classList.remove('plain-view');
 				h1.textContent = 'Animated';
-				// mainPanel should not contain static .animated-line elements — lines are created dynamically
+				// Clear previous content and insert a single static white line that spans the center area
+				// This is a minimal, reliable visual test: no animation, full-width line inside mainPanel
 				mainPanel.innerHTML = '';
+				// ensure mainPanel can contain absolutely positioned children
+				if (getComputedStyle(mainPanel).position === 'static') mainPanel.style.position = 'relative';
+
+				// Compute exact pixel bounds between the fixed side panels so mainPanel doesn't underlap them
+				const leftPanel = document.querySelector('.left-panel');
+				const rightPanel = document.querySelector('.right-panel');
+				if (leftPanel && rightPanel) {
+					const lpRect = leftPanel.getBoundingClientRect();
+					const rpRect = rightPanel.getBoundingClientRect();
+					const leftPx = Math.max(0, Math.round(lpRect.right));
+					const rightPx = Math.max(0, Math.round(rpRect.left));
+					const widthPx = Math.max(0, rightPx - leftPx);
+					// position mainPanel exactly between panels
+					mainPanel.style.position = 'absolute';
+					// compute left relative to the .layout container (because .main-panel is inside it and body has padding)
+					const layout = document.querySelector('.layout');
+					const layoutRect = layout ? layout.getBoundingClientRect() : { left: 0, top: 0 };
+					const relLeft = Math.max(0, leftPx - Math.round(layoutRect.left));
+					mainPanel.style.left = relLeft + 'px';
+					mainPanel.style.top = '0px';
+					mainPanel.style.width = widthPx + 'px';
+					mainPanel.style.height = window.innerHeight + 'px';
+					mainPanel.style.margin = '0';
+					mainPanel.style.padding = '0';
+				}
+				// remove any existing test line
+				const existing = mainPanel.querySelector('.static-line');
+				if (existing) existing.remove();
+				const line = document.createElement('div');
+				line.className = 'static-line';
+				mainPanel.appendChild(line);
+				// center the static line inside mainPanel with a small inset so it never reaches the side panels
+				const mpW = mainPanel.clientWidth || mainPanel.getBoundingClientRect().width;
+				const inset = Math.min(120, Math.floor(mpW * 0.06)); // at most 120px, or 6% of width
+				line.style.left = inset + 'px';
+				line.style.width = Math.max(0, mpW - inset * 2) + 'px';
+				// adjust for any padding inside mainPanel so the vertical position aligns visually
+				const mpStyle = getComputedStyle(mainPanel);
+				const padTop = parseFloat(mpStyle.paddingTop) || 0;
+				line.style.top = padTop + 'px';
+
+				// ensure the mainPanel overflow hides anything outside the bounds (defensive)
+				mainPanel.style.overflow = 'hidden';
 			} else if (type === 'gradient') {
 				h1.textContent = 'Gradient';
 				mainPanel.innerHTML = '';
@@ -415,109 +476,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
 			// Dynamically update right panel content
 			if (type === 'animated') {
-				rightViewTitle.textContent = 'Animated';
-				rightTop.innerHTML = `
-					<div class="color-picker-row">
-						<label>Color
-							<input id="color-picker" type="color" value="#ffffff" />
-						</label>
-					</div>
-					<div class="direction-picker-row">
-						<label>Direction
-							<select id="direction-select">
-								<option value="horizontal" selected>Horizontal</option>
-								<option value="vertical">Vertical</option>
-							</select>
-						</label>
-					</div>
-					<div class="pattern-picker-row">
-						<label>Pattern
-							<select id="pattern-select">
-								<option value="straight" selected>Straight</option>
-								<option value="curve">Curve</option>
-								<option value="hexish">Hexish</option>
-								<option value="zigzag">Zigzag</option>
-							</select>
-						</label>
-					</div>
-					<div class="panel-buttons">
-						<button id="apply-color" class="btn">Apply</button>
-						<button id="reset-colors" class="btn">Reset</button>
-					</div>
-				`;
-				// Re-setup listeners after DOM change
-				setTimeout(() => {
-					const targetSelect = document.getElementById('target-select');
-					const colorPicker = document.getElementById('color-picker');
-					const applyBtn = document.getElementById('apply-color');
-					const resetBtn = document.getElementById('reset-colors');
+                    h1.textContent = 'Animated';
 
-					if (targetSelect && colorPicker && applyBtn && resetBtn) {
-						function normalizeHex(val) {
-							if (!val) return '#000000';
-							val = val.trim();
-							if (val.startsWith('#')) return val;
-							if (val.startsWith('rgb')) return rgbToHex(val);
-							return val;
-						}
+                    // Clear existing center content
+                    mainPanel.innerHTML = '';
 
-						function updatePicker() {
-							if (!targetSelect) {
-								// For animated, update from --animated-bg
-								const v = getComputedStyle(root).getPropertyValue('--animated-bg').trim();
-								colorPicker.value = normalizeHex(v);
-							} else {
-								const target = targetSelect.value;
-								const vars = targets[target];
-								if (!vars || vars.length === 0) return;
-								const v = getComputedStyle(root).getPropertyValue(vars[0]).trim();
-								colorPicker.value = normalizeHex(v);
-							}
-						}
+                    // Make sure it can host absolutely-positioned elements if needed
+                    if (getComputedStyle(mainPanel).position === 'static') {
+                        mainPanel.style.position = 'relative';
+                    }
 
-						applyBtn.addEventListener('click', () => {
-							const color = colorPicker.value;
-							if (!targetSelect) {
-								// For animated, apply to --animated-bg
-								root.style.setProperty('--animated-bg', color);
-							} else {
-								const target = targetSelect.value;
-								const vars = targets[target] || [];
-								vars.forEach(variable => {
-									root.style.setProperty(variable, color);
-									if (variable.startsWith('--btn-')) {
-										const rgb = hexToRgb(normalizeHex(color));
-										const contrast = getContrastColor(rgb.r, rgb.g, rgb.b);
-										root.style.setProperty(variable + '-text', contrast);
-									}
-								});
-							}
-						});
+                    // Remove old line if any
+                    const old = mainPanel.querySelector('.moving-line');
+                    if (old) old.remove();
 
-						resetBtn.addEventListener('click', () => {
-							if (!targetSelect) {
-								// For animated, reset --animated-bg
-								root.style.setProperty('--animated-bg', '#ffffff'); // default
-							} else {
-								Object.entries(defaults).forEach(([k,v]) => {
-									root.style.setProperty(k, v);
-								});
-							}
-							updatePicker();
-						});
+                    // Create the line
+                    const line = document.createElement('div');
+                    line.className = 'moving-line';
+                    mainPanel.appendChild(line);
 
-						if (targetSelect) {
-							targetSelect.addEventListener('change', updatePicker);
-						}
-						updatePicker();
-
-						document.querySelector('.color-picker-row').addEventListener('click', () => {
-							document.getElementById('color-picker').click();
-						});
-
-					}
-				}, 0);
-			} else if (type === 'gradient') {
+                    // Make sure nothing spills out of this region
+                    mainPanel.style.overflow = 'hidden';
+                }
+                else if (type === 'gradient') {
 				rightViewTitle.textContent = 'Gradient';
 				rightTop.innerHTML = '';
 			} else {
@@ -539,8 +520,12 @@ document.addEventListener('DOMContentLoaded', () => {
 				const rightTop = document.querySelector('.right-top');
 				const rightViewTitle = document.querySelector('.right-view-title');
 
-			// Reset center content
+			// Reset center content and clear any animated inline styles
 			h1.textContent = '';
+			// clear inline styles that may have been applied by Animated view
+			['position','left','top','width','height','margin','padding','overflow'].forEach(p => mainPanel.style[p] = '');
+			// ensure plain helper class is present to restore layout and scrolling
+			mainPanel.classList.add('plain-view');
 			mainPanel.innerHTML = '';
 
 			// Reset right panel content
@@ -703,14 +688,21 @@ document.addEventListener('DOMContentLoaded', () => {
 							animatedLines.forEach((line, i) => {
 								// place at top or bottom inside mainPanel
 								const lineHeight = 3; // px
+								const mpStyle = getComputedStyle(mainPanel);
+								const padTop = parseFloat(mpStyle.paddingTop) || 0;
+								const padBottom = parseFloat(mpStyle.paddingBottom) || 0;
 								if (currentPosition === 'top') {
-									line.style.top = '0px';
+									line.style.top = padTop + 'px';
 								} else {
-									line.style.top = (mainPanel.clientHeight - lineHeight) + 'px';
+									// place above the bottom padding
+									const h = mainPanel.clientHeight || mainPanel.getBoundingClientRect().height;
+									line.style.top = Math.max(0, h - padBottom - lineHeight) + 'px';
 								}
-								// left relative to mainPanel (0) and width match mainPanel inner width
-								line.style.left = '0px';
-								line.style.width = Math.max(0, mainPanel.clientWidth) + 'px';
+								// inset a bit from the edges so lines don't visually reach under side panels
+								const mpWidth = mainPanel.clientWidth || mainPanel.getBoundingClientRect().width;
+								const inset = Math.min(120, Math.floor(mpWidth * 0.06));
+								line.style.left = inset + 'px';
+								line.style.width = Math.max(0, mpWidth - inset * 2) + 'px';
 								line.style.height = lineHeight + 'px';
 								// gradient sweep across the width
 								line.style.background = `linear-gradient(90deg, transparent 0%, ${color} 10%, rgba(255,255,255,0.95) 50%, ${color} 90%, transparent 100%)`;
