@@ -406,16 +406,10 @@ document.addEventListener('DOMContentLoaded', () => {
 			// Dynamically update center content
 			if (type === 'animated') {
 				h1.textContent = 'Animated';
-				mainPanel.innerHTML = `
-<div class="animated-bg">
-<div class="path-line"></div>
-<div class="animated-line"></div>
-<div class="animated-line"></div>
-<div class="animated-line"></div>
-</div>
-`;
+				mainPanel.innerHTML = '';
 			} else if (type === 'gradient') {
 				h1.textContent = 'Gradient';
+				mainPanel.innerHTML = '';
 			}
 
 			// Dynamically update right panel content
@@ -530,15 +524,16 @@ document.addEventListener('DOMContentLoaded', () => {
 				rightTop.innerHTML = ''; // for plain, but plain not here
 			}
 		});
-	});
-
-	// --- Foreground menu options ---
+	});	// --- Foreground menu options ---
 	document.querySelectorAll('.menu-option[data-fg]').forEach(btn => {
 		btn.addEventListener('click', () => {
 			const type = btn.dataset.fg;
 			if (type === 'buttons') {
 				document.body.classList.remove('view-gradient', 'view-animated', 'view-plain');
 				document.body.classList.add('view-plain');
+
+				// Set background color back to dark
+				document.body.style.backgroundColor = getComputedStyle(root).getPropertyValue('--bg').trim();
 
 				const rightTop = document.querySelector('.right-top');
 				const rightViewTitle = document.querySelector('.right-view-title');
@@ -667,13 +662,13 @@ document.addEventListener('DOMContentLoaded', () => {
 								pathLine.style.background = 'none';
 							} else if (currentPattern === 'curve') {
 								pathLine.style.clipPath = 'ellipse(50% 100% at 50% 50%)';
-								pathLine.style.background = 'rgba(0, 0, 0, 0.3)';
+								pathLine.style.background = 'rgba(211, 211, 211, 0.9)';
 							} else if (currentPattern === 'hexish') {
 								pathLine.style.clipPath = 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)';
-								pathLine.style.background = 'rgba(0, 0, 0, 0.3)';
+								pathLine.style.background = 'rgba(211, 211, 211, 0.9)';
 							} else if (currentPattern === 'zigzag') {
 								pathLine.style.clipPath = 'polygon(0% 0%, 25% 50%, 50% 0%, 75% 50%, 100% 0%, 100% 100%, 75% 50%, 50% 100%, 25% 50%, 0% 100%)';
-								pathLine.style.background = 'rgba(0, 0, 0, 0.3)';
+								pathLine.style.background = 'rgba(211, 211, 211, 0.9)';
 							}
 							lines.forEach((line, i) => {
 								// Reset
@@ -686,15 +681,15 @@ document.addEventListener('DOMContentLoaded', () => {
 									line.style.top = (30 + i * 20) + '%';
 									line.style.left = '0';
 									line.style.animation = 'gradient-shift 2s infinite ease-in-out';
-									line.style.background = `linear-gradient(90deg, transparent 0%, ${color} 50%, transparent 100%)`;
-									line.style.backgroundSize = '100% 100%';
+									line.style.background = `linear-gradient(90deg, transparent 0%, ${color} 10%, transparent 20%, transparent 100%)`;
+									line.style.backgroundSize = '200% 100%';
 								} else {
 									line.style.width = '2px';
 									line.style.height = '100%';
 									line.style.left = (30 + i * 20) + '%';
 									line.style.top = '0';
 									line.style.animation = 'gradient-shift-vertical 2s infinite ease-in-out';
-									line.style.background = `linear-gradient(0deg, transparent 0%, ${color} 50%, transparent 100%)`;
+									line.style.background = `linear-gradient(0deg, transparent 0%, ${color} 10%, transparent 20%, transparent 100%)`;
 									line.style.backgroundSize = '100% 200%';
 								}
 								// Set pattern
