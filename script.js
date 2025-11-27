@@ -406,6 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			// Dynamically update center content
 			if (type === 'animated') {
 				h1.textContent = 'Animated';
+				// mainPanel should not contain static .animated-line elements — lines are created dynamically
 				mainPanel.innerHTML = '';
 			} else if (type === 'gradient') {
 				h1.textContent = 'Gradient';
@@ -639,6 +640,8 @@ document.addEventListener('DOMContentLoaded', () => {
 						// Animated view setup
 						let currentDirection = 'horizontal';
 						let currentPattern = 'straight';
+						let currentPosition = 'top'; // 'top' or 'bottom'
+						let animatedLines = [];
 
 						function normalizeHex(val) {
 							if (!val) return '#000000';
@@ -648,91 +651,156 @@ document.addEventListener('DOMContentLoaded', () => {
 							return val;
 						}
 
-						function updatePicker() {
-							const v = getComputedStyle(root).getPropertyValue('--animated-bg').trim();
-							colorPicker.value = normalizeHex(v);
+						// create N lines and append to mainPanel so they sit inside the center area
+						function createLines(n = 3) {
+							removeLines();
+							console.log('[animated] createLines -> creating', n, 'lines');
+							for (let i = 0; i < n; i++) {
+								const el = document.createElement('div');
+								el.className = 'animated-line debug'; // mark debug so it's visible
+								el.dataset.index = i;
+								// pointer events none so they don't block UI
+								el.style.pointerEvents = 'none';
+								// ensure below header (header has z-index:2)
+								el.style.zIndex = '1';
+								// append into mainPanel (so they don't overlap side panels)
+								if (mainPanel) {
+									// make sure mainPanel is positioned to contain absolute children
+									const mpStyle = getComputedStyle(mainPanel).position;
+									if (mpStyle === 'static') mainPanel.style.position = 'relative';
+									mainPanel.appendChild(el);
+								} else {
+									document.body.appendChild(el);
+								}
+								animatedLines.push(el);
+							}
+							// add debug overlay and border on mainPanel
+							attachDebugOverlay();
+							updateLinePositions();
 						}
 
-						function updateLines() {
-							const lines = document.querySelectorAll('.animated-line');
-							const pathLine = document.querySelector('.path-line');
-							// Set pattern for path
-							if (currentPattern === 'straight') {
-								pathLine.style.clipPath = 'none';
-								pathLine.style.background = 'none';
-							} else if (currentPattern === 'curve') {
-								pathLine.style.clipPath = 'ellipse(50% 100% at 50% 50%)';
-								pathLine.style.background = 'rgba(211, 211, 211, 0.9)';
-							} else if (currentPattern === 'hexish') {
-								pathLine.style.clipPath = 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)';
-								pathLine.style.background = 'rgba(211, 211, 211, 0.9)';
-							} else if (currentPattern === 'zigzag') {
-								pathLine.style.clipPath = 'polygon(0% 0%, 25% 50%, 50% 0%, 75% 50%, 100% 0%, 100% 100%, 75% 50%, 50% 100%, 25% 50%, 0% 100%)';
-								pathLine.style.background = 'rgba(211, 211, 211, 0.9)';
-							}
-							lines.forEach((line, i) => {
-								// Reset
-								line.style.clipPath = 'none';
-								line.style.animation = '';
-								// Set direction and size
-								if (currentDirection === 'horizontal') {
-									line.style.width = '100%';
-									line.style.height = '2px';
-									line.style.top = (30 + i * 20) + '%';
-									line.style.left = '0';
-									line.style.animation = 'gradient-shift 2s infinite ease-in-out';
-									line.style.background = `linear-gradient(90deg, transparent 0%, ${color} 10%, transparent 20%, transparent 100%)`;
-									line.style.backgroundSize = '200% 100%';
+						function removeLines() {
+							animatedLines.forEach(el => el.remove());
+							animatedLines = [];
+						}
+
+						// compute left edge (right edge of left-panel) and right edge (left edge of right-panel)
+						function getCenterBounds() {
+							const leftPanel = document.querySelector('.left-panel');
+							const rightPanel = document.querySelector('.right-panel');
+							const lp = leftPanel.getBoundingClientRect();
+							const rp = rightPanel.getBoundingClientRect();
+							return { left: Math.max(0, Math.round(lp.right)), right: Math.max(0, Math.round(rp.left)) };
+						}
+
+						function updateLinePositions() {
+							// compute center area from panels but place lines relative to mainPanel
+							const bounds = getCenterBounds();
+							const availableWidth = Math.max(0, bounds.right - bounds.left);
+							const color = (colorPicker && colorPicker.value) ? colorPicker.value : getComputedStyle(root).getPropertyValue('--animated-bg').trim() || '#ffffff';
+							const mpRect = mainPanel.getBoundingClientRect();
+							console.log('[animated] updateLinePositions -> mainPanel rect', mpRect, 'bounds', bounds, 'availableWidth', availableWidth);
+							animatedLines.forEach((line, i) => {
+								// place at top or bottom inside mainPanel
+								const lineHeight = 3; // px
+								if (currentPosition === 'top') {
+									line.style.top = '0px';
 								} else {
-									line.style.width = '2px';
-									line.style.height = '100%';
-									line.style.left = (30 + i * 20) + '%';
-									line.style.top = '0';
-									line.style.animation = 'gradient-shift-vertical 2s infinite ease-in-out';
-									line.style.background = `linear-gradient(0deg, transparent 0%, ${color} 10%, transparent 20%, transparent 100%)`;
-									line.style.backgroundSize = '100% 200%';
+									line.style.top = (mainPanel.clientHeight - lineHeight) + 'px';
 								}
-								// Set pattern
-								if (currentPattern === 'straight') {
-									line.style.clipPath = 'none';
-								} else if (currentPattern === 'curve') {
-									line.style.clipPath = 'ellipse(50% 100% at 50% 50%)';
-								} else if (currentPattern === 'hexish') {
-									line.style.clipPath = 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)';
-								} else if (currentPattern === 'zigzag') {
-									line.style.clipPath = 'polygon(0% 0%, 25% 50%, 50% 0%, 75% 50%, 100% 0%, 100% 100%, 75% 50%, 50% 100%, 25% 50%, 0% 100%)';
-								}
+								// left relative to mainPanel (0) and width match mainPanel inner width
+								line.style.left = '0px';
+								line.style.width = Math.max(0, mainPanel.clientWidth) + 'px';
+								line.style.height = lineHeight + 'px';
+								// gradient sweep across the width
+								line.style.background = `linear-gradient(90deg, transparent 0%, ${color} 10%, rgba(255,255,255,0.95) 50%, ${color} 90%, transparent 100%)`;
+								line.style.backgroundSize = '200% 100%';
+								line.style.animation = `sweep 2.2s linear ${i * 0.15}s infinite`;
+							});
+							updateDebugOverlay(bounds, mpRect, animatedLines.length);
+						}
+
+						// Debug overlay helpers
+						let debugOverlayEl = null;
+						function attachDebugOverlay() {
+							if (!mainPanel) return;
+							mainPanel.classList.add('debug-border');
+							if (!debugOverlayEl) {
+								debugOverlayEl = document.createElement('div');
+								debugOverlayEl.className = 'debug-overlay';
+								debugOverlayEl.textContent = 'animated debug';
+								mainPanel.appendChild(debugOverlayEl);
+							}
+						}
+						function updateDebugOverlay(bounds, mpRect, count) {
+							if (!debugOverlayEl) return;
+							debugOverlayEl.innerHTML = `lines: ${count}<br>mp: ${Math.round(mpRect.width)}x${Math.round(mpRect.height)}<br>bounds L:${bounds.left} R:${bounds.right}`;
+						}
+
+						// wire controls
+						const directionSelect = document.getElementById('direction-select');
+						const patternSelect = document.getElementById('pattern-select');
+
+						// add a position control to the right-top (Top / Bottom)
+						const posRow = document.createElement('div');
+						posRow.className = 'direction-picker-row';
+						posRow.innerHTML = `<label>Position <select id="position-select"><option value="top">Top</option><option value="bottom">Bottom</option></select></label>`;
+						const rightTopEl = document.querySelector('.right-top');
+						if (rightTopEl) rightTopEl.insertBefore(posRow, rightTopEl.querySelector('.panel-buttons'));
+
+						const positionSelect = document.getElementById('position-select');
+						if (positionSelect) {
+							positionSelect.addEventListener('change', (e) => {
+								currentPosition = e.target.value;
+								updateLinePositions();
 							});
 						}
 
-						applyBtn.addEventListener('click', () => {
-							const color = colorPicker.value;
-							root.style.setProperty('--animated-bg', color);
-							updateLines();
-						});
+						if (directionSelect) {
+							directionSelect.addEventListener('change', (e) => {
+								currentDirection = e.target.value;
+								// vertical not implemented for full-screen sweep currently, keep horizontal behavior
+								updateLinePositions();
+							});
+						}
 
-						resetBtn.addEventListener('click', () => {
-							root.style.setProperty('--animated-bg', '#ffffff');
-							updatePicker();
-							updateLines();
-						});
+						if (patternSelect) {
+							patternSelect.addEventListener('change', (e) => {
+								currentPattern = e.target.value;
+								// pattern clip-path could be applied per-line in future; for now keep full-width lines
+								updateLinePositions();
+							});
+						}
 
-						updatePicker();
-						updateLines();
+						// color picker apply/reset
+						if (applyBtn) {
+							applyBtn.addEventListener('click', () => {
+								const color = colorPicker.value;
+								root.style.setProperty('--animated-bg', color);
+								updateLinePositions();
+							});
+						}
+						if (resetBtn) {
+							resetBtn.addEventListener('click', () => {
+								root.style.setProperty('--animated-bg', '#ffffff');
+								if (colorPicker) colorPicker.value = '#ffffff';
+								updateLinePositions();
+							});
+						}
 
-						document.querySelector('.color-picker-row').addEventListener('click', () => {
-							document.getElementById('color-picker').click();
-						});
+						// create lines now and wire resize to update
+						createLines(3);
+						window.addEventListener('resize', updateLinePositions);
 
-						document.getElementById('direction-select').addEventListener('change', (e) => {
-							currentDirection = e.target.value;
-							updateLines();
+						// remove lines when navigating away: listen for view class changes by using a MutationObserver
+						const observer = new MutationObserver(() => {
+							if (!document.body.classList.contains('view-animated')) {
+								removeLines();
+								window.removeEventListener('resize', updateLinePositions);
+								observer.disconnect();
+							}
 						});
-
-						document.getElementById('pattern-select').addEventListener('change', (e) => {
-							currentPattern = e.target.value;
-							updateLines();
-						});
+						observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 					}
 				}, 0);
 			}

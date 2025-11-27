@@ -908,11 +908,31 @@ body.view-animated .right-view-title::before {
 
 /* Animated lines */
 .animated-line {
-  position: absolute;
-  height: 2px;
+  position: absolute; /* positioned inside .main-panel so it doesn't overlap side panels */
+  height: 3px;
   width: 100px;
   background: var(--animated-bg);
-  animation: line-sweep 4s infinite linear;
+  pointer-events: none;
+  z-index: 1; /* behind header (header uses z-index:2) */
+}
+
+/* Debugging visuals (temporary) */
+.debug-overlay {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  font-size: 12px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  z-index: 9999;
+}
+.main-panel.debug-border {
+  outline: 2px dashed rgba(255,0,0,0.8);
+}
+.animated-line.debug {
+  background: rgba(255,0,0,0.9) !important;
 }
 
 .path-line {
@@ -951,4 +971,9 @@ body.view-animated .right-view-title::before {
 @keyframes gradient-shift-vertical {
   0% { background-position: 50% 0%; }
   100% { background-position: 50% 100%; }
+}
+
+@keyframes sweep {
+  0% { background-position: -100% 50%; }
+  100% { background-position: 200% 50%; }
 }
