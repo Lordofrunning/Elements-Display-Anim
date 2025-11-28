@@ -404,6 +404,12 @@ body.view-animated .main-panel {
   .main-panel { width: 90%; }
 }
 
+/* Make button grid switch to a single column before panels disappear so buttons don't stay cramped
+   Panels hide at 900px; switch to 1 column at 1100px to give breathing room while panels still present */
+@media (max-width: 1100px) {
+  .button-grid { grid-template-columns: 1fr; }
+}
+
 .btn {
   font-size: 1rem;
   border: none;
