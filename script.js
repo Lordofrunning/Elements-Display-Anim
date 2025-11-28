@@ -243,6 +243,31 @@ document.addEventListener('DOMContentLoaded', () => {
 		return val;
 	}
 
+	// Recompute and apply mainPanel bounds so animated content exactly matches center area
+	function applyMainPanelBounds() {
+		const leftPanel = document.querySelector('.left-panel');
+		const rightPanel = document.querySelector('.right-panel');
+		if (leftPanel && rightPanel && mainPanel) {
+			const lpRect = leftPanel.getBoundingClientRect();
+			const rpRect = rightPanel.getBoundingClientRect();
+			const leftPx = Math.max(0, Math.round(lpRect.right));
+			const rightPx = Math.max(0, Math.round(rpRect.left));
+			const widthPx = Math.max(0, rightPx - leftPx);
+			// position mainPanel exactly between panels
+			mainPanel.style.position = 'absolute';
+			// compute left relative to the .layout container (because .main-panel is inside it and body has padding)
+			const layout = document.querySelector('.layout');
+			const layoutRect = layout ? layout.getBoundingClientRect() : { left: 0, top: 0 };
+			const relLeft = Math.max(0, leftPx - Math.round(layoutRect.left));
+			mainPanel.style.left = relLeft + 'px';
+			mainPanel.style.top = '0px';
+			mainPanel.style.width = widthPx + 'px';
+			mainPanel.style.height = window.innerHeight + 'px';
+			mainPanel.style.margin = '0';
+			mainPanel.style.padding = '0';
+		}
+	}
+
 	function updatePicker() {
 		const target = targetSelect.value;
 		const vars = targets[target];
@@ -488,15 +513,30 @@ document.addEventListener('DOMContentLoaded', () => {
 			});
 		}
 
-		// create lines now and wire resize to update
+		// create lines now
 		createLines(3);
-		window.addEventListener('resize', updateLinePositions);
+
+		// On resize: re-run the original math used on load for computing line left/width
+		function applyOriginalLineMath() {
+			const mpW = mainPanel.clientWidth || mainPanel.getBoundingClientRect().width;
+			const inset = Math.min(120, Math.floor(mpW * 0.06));
+			animatedLines.forEach((line) => {
+				line.style.left = inset + 'px';
+				line.style.width = Math.max(0, mpW - inset * 2) + 'px';
+			});
+			const mpRect = mainPanel.getBoundingClientRect();
+			const leftPx = Math.round(mpRect.left);
+			const rightPx = Math.round(mpRect.right);
+			updateDebugOverlay({ left: leftPx, right: rightPx }, mpRect, animatedLines.length);
+		}
+
+		window.addEventListener('resize', applyOriginalLineMath);
 
 		// remove lines when navigating away: listen for view class changes by using a MutationObserver
 		const observer = new MutationObserver(() => {
 			if (!document.body.classList.contains('view-animated')) {
 				removeLines();
-				window.removeEventListener('resize', updateLinePositions);
+				window.removeEventListener('resize', applyOriginalLineMath);
 				observer.disconnect();
 			}
 		});
@@ -623,28 +663,8 @@ document.addEventListener('DOMContentLoaded', () => {
 				// ensure mainPanel can contain absolutely positioned children
 				if (getComputedStyle(mainPanel).position === 'static') mainPanel.style.position = 'relative';
 
-				// Compute exact pixel bounds between the fixed side panels so mainPanel doesn't underlap them
-				const leftPanel = document.querySelector('.left-panel');
-				const rightPanel = document.querySelector('.right-panel');
-				if (leftPanel && rightPanel) {
-					const lpRect = leftPanel.getBoundingClientRect();
-					const rpRect = rightPanel.getBoundingClientRect();
-					const leftPx = Math.max(0, Math.round(lpRect.right));
-					const rightPx = Math.max(0, Math.round(rpRect.left));
-					const widthPx = Math.max(0, rightPx - leftPx);
-					// position mainPanel exactly between panels
-					mainPanel.style.position = 'absolute';
-					// compute left relative to the .layout container (because .main-panel is inside it and body has padding)
-					const layout = document.querySelector('.layout');
-					const layoutRect = layout ? layout.getBoundingClientRect() : { left: 0, top: 0 };
-					const relLeft = Math.max(0, leftPx - Math.round(layoutRect.left));
-					mainPanel.style.left = relLeft + 'px';
-					mainPanel.style.top = '0px';
-					mainPanel.style.width = widthPx + 'px';
-					mainPanel.style.height = window.innerHeight + 'px';
-					mainPanel.style.margin = '0';
-					mainPanel.style.padding = '0';
-				}
+						// Compute exact pixel bounds between the fixed side panels so mainPanel doesn't underlap them
+						applyMainPanelBounds();
 				// remove any existing test line
 				const existing = mainPanel.querySelector('.static-line');
 				if (existing) existing.remove();
