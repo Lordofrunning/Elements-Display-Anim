@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+
 	// --- Button setup and per-button effects ---
 	function setupButtons() {
 	// Create strips for btn-12
@@ -310,199 +311,6 @@ document.addEventListener('DOMContentLoaded', () => {
 		return brightness > 186 ? '#000000' : '#ffffff';
 	}
 
-	// --- Animated view extractor: pulls the large inline block into a named function ---
-	function setupAnimatedViewControls() {
-		// Animated view setup
-		// --- Animated view: line creation and controls ---
-		let currentDirection = 'horizontal';
-		let currentPattern = 'straight';
-		let currentPosition = 'top'; // 'top' or 'bottom'
-		let animatedLines = [];
-
-		// create N lines and append to mainPanel so they sit inside the center area
-		function createLines(n = 3) {
-			removeLines();
-			console.log('[animated] createLines -> creating', n, 'lines');
-			for (let i = 0; i < n; i++) {
-				const el = document.createElement('div');
-				el.className = 'animated-line debug'; // mark debug so it's visible
-				el.dataset.index = i;
-				// pointer events none so they don't block UI
-				el.style.pointerEvents = 'none';
-				// ensure below header (header has z-index:2)
-				el.style.zIndex = '1';
-				// append into mainPanel (so they don't overlap side panels)
-				if (mainPanel) {
-					// make sure mainPanel is positioned to contain absolute children
-					const mpStyle = getComputedStyle(mainPanel).position;
-					if (mpStyle === 'static') mainPanel.style.position = 'relative';
-					mainPanel.appendChild(el);
-				} else {
-					document.body.appendChild(el);
-				}
-				animatedLines.push(el);
-			}
-			// add debug overlay and border on mainPanel
-			attachDebugOverlay();
-			updateLinePositions();
-		}
-
-		function removeLines() {
-			animatedLines.forEach(el => el.remove());
-			animatedLines = [];
-		}
-
-		// compute left edge (right edge of left-panel) and right edge (left edge of right-panel)
-		function getCenterBounds() {
-			const leftPanel = document.querySelector('.left-panel');
-			const rightPanel = document.querySelector('.right-panel');
-			const lp = leftPanel.getBoundingClientRect();
-			const rp = rightPanel.getBoundingClientRect();
-			return { left: Math.max(0, Math.round(lp.right)), right: Math.max(0, Math.round(rp.left)) };
-		}
-
-		function updateLinePositions() {
-			// compute center area from panels but place lines relative to mainPanel
-			const bounds = getCenterBounds();
-			const availableWidth = Math.max(0, bounds.right - bounds.left);
-			// prefer the animated color picker if present, fall back to the global colorPicker or CSS var
-			const animPicker = document.getElementById('animated-color-picker');
-			const color = (animPicker && animPicker.value)
-				? animPicker.value
-				: ((colorPicker && colorPicker.value) ? colorPicker.value : getComputedStyle(root).getPropertyValue('--animated-bg').trim() || '#ffffff');
-			const mpRect = mainPanel.getBoundingClientRect();
-			console.log('[animated] updateLinePositions -> mainPanel rect', mpRect, 'bounds', bounds, 'availableWidth', availableWidth);
-			animatedLines.forEach((line, i) => {
-				// place at top or bottom inside mainPanel
-				const lineHeight = 3; // px
-				const mpStyle = getComputedStyle(mainPanel);
-				const padTop = parseFloat(mpStyle.paddingTop) || 0;
-				const padBottom = parseFloat(mpStyle.paddingBottom) || 0;
-				if (currentPosition === 'top') {
-					line.style.top = padTop + 'px';
-				} else {
-					// place above the bottom padding
-					const h = mainPanel.clientHeight || mainPanel.getBoundingClientRect().height;
-					line.style.top = Math.max(0, h - padBottom - lineHeight) + 'px';
-				}
-				// inset a bit from the edges so lines don't visually reach under side panels
-				const mpWidth = mainPanel.clientWidth || mainPanel.getBoundingClientRect().width;
-				const inset = Math.min(120, Math.floor(mpWidth * 0.06));
-				line.style.left = inset + 'px';
-				line.style.width = Math.max(0, mpWidth - inset * 2) + 'px';
-				line.style.height = lineHeight + 'px';
-				// gradient sweep across the width
-				line.style.background = `linear-gradient(90deg, transparent 0%, ${color} 10%, rgba(255,255,255,0.95) 50%, ${color} 90%, transparent 100%)`;
-				line.style.backgroundSize = '200% 100%';
-				line.style.animation = `sweep 2.2s linear ${i * 0.15}s infinite`;
-			});
-			updateDebugOverlay(bounds, mpRect, animatedLines.length);
-		}
-
-		// Debug overlay helpers
-		let debugOverlayEl = null;
-		function attachDebugOverlay() {
-			if (!mainPanel) return;
-			mainPanel.classList.add('debug-border');
-			if (!debugOverlayEl) {
-				debugOverlayEl = document.createElement('div');
-				debugOverlayEl.className = 'debug-overlay';
-				debugOverlayEl.textContent = 'animated debug';
-				mainPanel.appendChild(debugOverlayEl);
-			}
-		}
-		function updateDebugOverlay(bounds, mpRect, count) {
-			if (!debugOverlayEl) return;
-			debugOverlayEl.innerHTML = `lines: ${count}<br>mp: ${Math.round(mpRect.width)}x${Math.round(mpRect.height)}<br>bounds L:${bounds.left} R:${bounds.right}`;
-		}
-
-		// wire controls
-		const directionSelect = document.getElementById('direction-select');
-		const patternSelect = document.getElementById('pattern-select');
-
-		// add a position control to the right-top (Top / Bottom)
-		const posRow = document.createElement('div');
-		posRow.className = 'direction-picker-row';
-		posRow.innerHTML = `<label>Position <select id="position-select"><option value="top">Top</option><option value="bottom">Bottom</option></select></label>`;
-		const rightTopEl = document.querySelector('.right-top');
-		if (rightTopEl) rightTopEl.insertBefore(posRow, rightTopEl.querySelector('.panel-buttons'));
-
-		// insert animated line color picker into the right-top panel dynamically
-		if (rightTopEl) {
-			const animColorRow = document.createElement('div');
-			animColorRow.className = 'color-picker-row';
-			animColorRow.innerHTML = `<label>Line Color <input id="animated-color-picker" type="color" value="#ffffff"/></label>`;
-			const btnArea = rightTopEl.querySelector('.panel-buttons');
-			if (btnArea) rightTopEl.insertBefore(animColorRow, btnArea);
-			else rightTopEl.appendChild(animColorRow);
-
-			// initialize picker from CSS var and wire updates
-			const acp = document.getElementById('animated-color-picker');
-			if (acp) {
-				const v = getComputedStyle(root).getPropertyValue('--animated-bg').trim() || '#ffffff';
-				acp.value = (v.startsWith('#') ? v : '#ffffff');
-				acp.addEventListener('input', (e) => {
-					root.style.setProperty('--animated-bg', e.target.value);
-					updateLinePositions();
-				});
-			}
-		}
-
-		const positionSelect = document.getElementById('position-select');
-		if (positionSelect) {
-			positionSelect.addEventListener('change', (e) => {
-				currentPosition = e.target.value;
-				updateLinePositions();
-			});
-		}
-
-		if (directionSelect) {
-			directionSelect.addEventListener('change', (e) => {
-				currentDirection = e.target.value;
-				// vertical not implemented for full-screen sweep currently, keep horizontal behavior
-				updateLinePositions();
-			});
-		}
-
-		if (patternSelect) {
-			patternSelect.addEventListener('change', (e) => {
-				currentPattern = e.target.value;
-				// pattern clip-path could be applied per-line in future; for now keep full-width lines
-				updateLinePositions();
-			});
-		}
-
-		// color picker apply/reset
-		if (applyBtn) {
-			applyBtn.addEventListener('click', () => {
-				const color = colorPicker.value;
-				root.style.setProperty('--animated-bg', color);
-				updateLinePositions();
-			});
-		}
-		if (resetBtn) {
-			resetBtn.addEventListener('click', () => {
-				root.style.setProperty('--animated-bg', '#ffffff');
-				if (colorPicker) colorPicker.value = '#ffffff';
-				updateLinePositions();
-			});
-		}
-
-		// create lines now and wire resize to update
-		createLines(3);
-		window.addEventListener('resize', updateLinePositions);
-
-		// remove lines when navigating away: listen for view class changes by using a MutationObserver
-		const observer = new MutationObserver(() => {
-			if (!document.body.classList.contains('view-animated')) {
-				removeLines();
-				window.removeEventListener('resize', updateLinePositions);
-				observer.disconnect();
-			}
-		});
-		observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-	}
-
 
 
 
@@ -587,8 +395,8 @@ document.addEventListener('DOMContentLoaded', () => {
 	document.querySelectorAll('.menu-option[data-bg]').forEach(btn => {
 		btn.addEventListener('click', () => {
 			const type = btn.dataset.bg;
-                console.log('[animated] menu click, type=', type);
-                lastBgType = type;
+		        console.log('[animated] menu click, type=', type);
+		        lastBgType = type;
 			// Remove previous view classes
 			document.body.classList.remove('view-gradient', 'view-animated', 'view-plain');
 			// Add new view class for dynamic content switching
@@ -670,29 +478,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
 			// Dynamically update right panel content
 			if (type === 'animated') {
-                    h1.textContent = 'Animated';
+			            h1.textContent = 'Animated';
 
-                    // Clear existing center content
-                    mainPanel.innerHTML = '';
+			            // Clear existing center content
+			            mainPanel.innerHTML = '';
 
-                    // Make sure it can host absolutely-positioned elements if needed
-                    if (getComputedStyle(mainPanel).position === 'static') {
-                        mainPanel.style.position = 'relative';
-                    }
+			            // Make sure it can host absolutely-positioned elements if needed
+			            if (getComputedStyle(mainPanel).position === 'static') {
+			                mainPanel.style.position = 'relative';
+			            }
 
-                    // Remove old line if any
-                    const old = mainPanel.querySelector('.moving-line');
-                    if (old) old.remove();
+			            // Remove old line if any
+			            const old = mainPanel.querySelector('.moving-line');
+			            if (old) old.remove();
 
-                    // Create the line
-                    const line = document.createElement('div');
-                    line.className = 'moving-line';
-                    mainPanel.appendChild(line);
+			            // Create the line
+			            const line = document.createElement('div');
+			            line.className = 'moving-line';
+			            mainPanel.appendChild(line);
 
-                    // Make sure nothing spills out of this region
-                    mainPanel.style.overflow = 'hidden';
-                }
-                else if (type === 'gradient') {
+			            // Make sure nothing spills out of this region
+			            mainPanel.style.overflow = 'hidden';
+			        }
+					else if (type === 'gradient') {
 				rightViewTitle.textContent = 'Gradient';
 				rightTop.innerHTML = '';
 			} else {
@@ -700,7 +508,12 @@ document.addEventListener('DOMContentLoaded', () => {
 				rightTop.innerHTML = ''; // for plain, but plain not here
 			}
 		});
-	});	// --- Foreground menu options ---
+	});
+
+
+
+
+	// --- Foreground menu options ---
 	document.querySelectorAll('.menu-option[data-fg]').forEach(btn => {
 		btn.addEventListener('click', () => {
 			const type = btn.dataset.fg;
@@ -730,8 +543,8 @@ document.addEventListener('DOMContentLoaded', () => {
 			mainPanel.innerHTML = buttonGridHTML;
 			setupButtons();
 			h1.textContent = 'Button Showcase';				// Dynamically update right panel content
-				rightViewTitle.textContent = 'Plain';
-				rightTop.innerHTML = `
+			rightViewTitle.textContent = 'Plain';
+			rightTop.innerHTML = `
 					<h2>Theme Switcher</h2>
 					<label for="target-select">Filter</label>
 					<select id="target-select">
@@ -808,17 +621,198 @@ document.addEventListener('DOMContentLoaded', () => {
 							document.getElementById('color-picker').click();
 						});
 					} else {
-						// Animated view: delegate to extracted setup function
-						setupAnimatedViewControls();
-					}
+						// Animated view setup
+						// --- Animated view: line creation and controls ---
+							let currentDirection = 'horizontal';
+						let currentPattern = 'straight';
+						let currentPosition = 'top'; // 'top' or 'bottom'
+						let animatedLines = [];
+
+							// create N lines and append to mainPanel so they sit inside the center area
+							function createLines(n = 3) {
+								removeLines();
+								console.log('[animated] createLines -> creating', n, 'lines');
+								for (let i = 0; i < n; i++) {
+									const el = document.createElement('div');
+									el.className = 'animated-line debug'; // mark debug so it's visible
+									el.dataset.index = i;
+									// pointer events none so they don't block UI
+									el.style.pointerEvents = 'none';
+									// ensure below header (header has z-index:2)
+									el.style.zIndex = '1';
+									// append into mainPanel (so they don't overlap side panels)
+									if (mainPanel) {
+										// make sure mainPanel is positioned to contain absolute children
+										const mpStyle = getComputedStyle(mainPanel).position;
+										if (mpStyle === 'static') mainPanel.style.position = 'relative';
+										mainPanel.appendChild(el);
+									} else {
+										document.body.appendChild(el);
+									}
+									animatedLines.push(el);
+								}
+								// add debug overlay and border on mainPanel
+								attachDebugOverlay();
+								updateLinePositions();
+							}
+
+							function removeLines() {
+								animatedLines.forEach(el => el.remove());
+								animatedLines = [];
+							}
+
+							// compute left edge (right edge of left-panel) and right edge (left edge of right-panel)
+							function getCenterBounds() {
+								const leftPanel = document.querySelector('.left-panel');
+								const rightPanel = document.querySelector('.right-panel');
+								const lp = leftPanel.getBoundingClientRect();
+								const rp = rightPanel.getBoundingClientRect();
+								return { left: Math.max(0, Math.round(lp.right)), right: Math.max(0, Math.round(rp.left)) };
+							}
+
+							function updateLinePositions() {
+								// compute center area from panels but place lines relative to mainPanel
+								const bounds = getCenterBounds();
+								const availableWidth = Math.max(0, bounds.right - bounds.left);
+								// prefer the animated color picker if present, fall back to the global colorPicker or CSS var
+								const animPicker = document.getElementById('animated-color-picker');
+								const color = (animPicker && animPicker.value)
+									? animPicker.value
+									: ((colorPicker && colorPicker.value) ? colorPicker.value : getComputedStyle(root).getPropertyValue('--animated-bg').trim() || '#ffffff');
+								const mpRect = mainPanel.getBoundingClientRect();
+								console.log('[animated] updateLinePositions -> mainPanel rect', mpRect, 'bounds', bounds, 'availableWidth', availableWidth);
+								animatedLines.forEach((line, i) => {
+									// place at top or bottom inside mainPanel
+									const lineHeight = 3; // px
+									const mpStyle = getComputedStyle(mainPanel);
+									const padTop = parseFloat(mpStyle.paddingTop) || 0;
+									const padBottom = parseFloat(mpStyle.paddingBottom) || 0;
+									if (currentPosition === 'top') {
+										line.style.top = padTop + 'px';
+									} else {
+										// place above the bottom padding
+										const h = mainPanel.clientHeight || mainPanel.getBoundingClientRect().height;
+										line.style.top = Math.max(0, h - padBottom - lineHeight) + 'px';
+									}
+									// inset a bit from the edges so lines don't visually reach under side panels
+									const mpWidth = mainPanel.clientWidth || mainPanel.getBoundingClientRect().width;
+									const inset = Math.min(120, Math.floor(mpWidth * 0.06));
+									line.style.left = inset + 'px';
+									line.style.width = Math.max(0, mpWidth - inset * 2) + 'px';
+									line.style.height = lineHeight + 'px';
+									// gradient sweep across the width
+									line.style.background = `linear-gradient(90deg, transparent 0%, ${color} 10%, rgba(255,255,255,0.95) 50%, ${color} 90%, transparent 100%)`;
+									line.style.backgroundSize = '200% 100%';
+									line.style.animation = `sweep 2.2s linear ${i * 0.15}s infinite`;
+								});
+								updateDebugOverlay(bounds, mpRect, animatedLines.length);
+							}
+
+							// Debug overlay helpers
+							let debugOverlayEl = null;
+							function attachDebugOverlay() {
+								if (!mainPanel) return;
+								mainPanel.classList.add('debug-border');
+								if (!debugOverlayEl) {
+									debugOverlayEl = document.createElement('div');
+									debugOverlayEl.className = 'debug-overlay';
+									debugOverlayEl.textContent = 'animated debug';
+									mainPanel.appendChild(debugOverlayEl);
+								}
+							}
+							function updateDebugOverlay(bounds, mpRect, count) {
+								if (!debugOverlayEl) return;
+								debugOverlayEl.innerHTML = `lines: ${count}<br>mp: ${Math.round(mpRect.width)}x${Math.round(mpRect.height)}<br>bounds L:${bounds.left} R:${bounds.right}`;
+							}
+
+							// wire controls
+							const directionSelect = document.getElementById('direction-select');
+							const patternSelect = document.getElementById('pattern-select');
+
+							// add a position control to the right-top (Top / Bottom)
+							const posRow = document.createElement('div');
+							posRow.className = 'direction-picker-row';
+							posRow.innerHTML = `<label>Position <select id="position-select"><option value="top">Top</option><option value="bottom">Bottom</option></select></label>`;
+							const rightTopEl = document.querySelector('.right-top');
+							if (rightTopEl) rightTopEl.insertBefore(posRow, rightTopEl.querySelector('.panel-buttons'));
+
+							// insert animated line color picker into the right-top panel dynamically
+							if (rightTopEl) {
+								const animColorRow = document.createElement('div');
+								animColorRow.className = 'color-picker-row';
+								animColorRow.innerHTML = `<label>Line Color <input id="animated-color-picker" type="color" value="#ffffff"/></label>`;
+								const btnArea = rightTopEl.querySelector('.panel-buttons');
+								if (btnArea) rightTopEl.insertBefore(animColorRow, btnArea);
+								else rightTopEl.appendChild(animColorRow);
+
+								// initialize picker from CSS var and wire updates
+								const acp = document.getElementById('animated-color-picker');
+								if (acp) {
+									const v = getComputedStyle(root).getPropertyValue('--animated-bg').trim() || '#ffffff';
+									acp.value = (v.startsWith('#') ? v : '#ffffff');
+									acp.addEventListener('input', (e) => {
+										root.style.setProperty('--animated-bg', e.target.value);
+										updateLinePositions();
+									});
+								}
+							}
+
+							const positionSelect = document.getElementById('position-select');
+							if (positionSelect) {
+								positionSelect.addEventListener('change', (e) => {
+									currentPosition = e.target.value;
+									updateLinePositions();
+								});
+							}
+
+							if (directionSelect) {
+								directionSelect.addEventListener('change', (e) => {
+									currentDirection = e.target.value;
+									// vertical not implemented for full-screen sweep currently, keep horizontal behavior
+									updateLinePositions();
+								});
+							}
+
+							if (patternSelect) {
+								patternSelect.addEventListener('change', (e) => {
+									currentPattern = e.target.value;
+									// pattern clip-path could be applied per-line in future; for now keep full-width lines
+									updateLinePositions();
+								});
+							}
+
+							// color picker apply/reset
+							if (applyBtn) {
+								applyBtn.addEventListener('click', () => {
+									const color = colorPicker.value;
+									root.style.setProperty('--animated-bg', color);
+									updateLinePositions();
+								});
+							}
+							if (resetBtn) {
+								resetBtn.addEventListener('click', () => {
+									root.style.setProperty('--animated-bg', '#ffffff');
+									if (colorPicker) colorPicker.value = '#ffffff';
+									updateLinePositions();
+								});
+							}
+
+							// create lines now and wire resize to update
+							createLines(3);
+							window.addEventListener('resize', updateLinePositions);
+
+							// remove lines when navigating away: listen for view class changes by using a MutationObserver
+							const observer = new MutationObserver(() => {
+								if (!document.body.classList.contains('view-animated')) {
+									removeLines();
+									window.removeEventListener('resize', updateLinePositions);
+									observer.disconnect();
+								}
+							});
+							observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+						}
 					}, 0);
-			}
-			// TODO: Handle other foreground options
-		});
+		}
+		// TODO: Handle other foreground options
 	});
-
-
-
-
-
 });
