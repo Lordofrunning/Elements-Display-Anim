@@ -1,3 +1,926 @@
+/* Backup of script.js - updated on 2025-11-28
+   This is a snapshot of the working `script.js` prior to splitting into modules.
+   If you need to restore the original file, copy this file over `script.js`.
+*/
+
+document.addEventListener('DOMContentLoaded', () => {
+	const root = document.documentElement;
+
+	// Initial setup (default view is set below once DOM refs are ready)
+
+	const h1 = document.querySelector('h1');
+	const mainPanel = document.querySelector('.main-panel');
+	const buttonGridHTML = `
+<div class="button-grid">
+  <button class="btn btn-1">Pulse</button>
+  <button class="btn btn-3">Glow</button>
+  <button class="btn btn-4">Bounce</button>
+  <button class="btn btn-5">Bob</button>
+  <button class="btn btn-6">Shimmer</button>
+  <button class="btn btn-7">Subtle Glow</button>
+  <button class="btn btn-8">Particle Explosion</button>
+  <button class="btn btn-9">Loading Morph</button>
+  <button class="btn btn-10">3D Push</button>
+  <button class="btn btn-11">Glassmorphic</button>
+  <button class="btn btn-12"><span class="btn-text">Disintegrate</span></button>
+  <button class="btn btn-13"><span class="btn-text">Gradient Fill</span></button>
+</div>
+`;
+
+	// Set default view
+	document.body.classList.add('view-plain');
+	h1.textContent = 'Button Showcase';
+	mainPanel.innerHTML = buttonGridHTML;
+	setupButtons();
+
+	// debugging: top-level load
+	console.log('[animated] script loaded');
+
+	let lastBgType = null;
+
+	const targets = {
+		all: ['--btn-1','--btn-3','--btn-4','--btn-5','--btn-6','--btn-7','--btn-base','--btn-8','--btn-9','--btn-10','--btn-11','--btn-12','--btn-13'],
+		btn1: ['--btn-1'],
+		btn3: ['--btn-3'],
+		btn4: ['--btn-4'],
+		btn5: ['--btn-5'],
+		btn6: ['--btn-6'],
+		btn7: ['--btn-7'],
+		btn8: ['--btn-8'],
+		btn9: ['--btn-9'],
+		btn10: ['--btn-10'],
+		btn11: ['--btn-11'],
+		btn12: ['--btn-12'],
+		btn13: ['--btn-13'],
+		'left-panel': ['--panel-left-bg','--panel-divider'],
+		'right-panel': ['--panel-right-bg'],
+		text: ['--text'],
+		accent: ['--accent']
+	};
+
+
+
+	// --- Button setup and per-button effects ---
+	function setupButtons() {
+	// Create strips for btn-12
+	const btn12 = document.querySelector('.btn-12');
+	if (btn12) {
+		for(let i = 0; i < 10; i++) {
+			const strip = document.createElement('div');
+			strip.classList.add('strip');
+			strip.style.left = (i * 10) + '%';
+			strip.style.width = '10%';
+			btn12.appendChild(strip);
+		}
+
+		// helper: recreate strips (idempotent)
+		function recreateStrips() {
+			if (!btn12.querySelector('.strip')) {
+				for (let j = 0; j < 10; j++) {
+					const strip = document.createElement('div');
+					strip.classList.add('strip');
+					strip.style.left = (j * 10) + '%';
+					strip.style.width = '10%';
+					btn12.appendChild(strip);
+				}
+			}
+		}
+
+		// helper: restore visual state of the button (clear inline transforms/styles)
+		function resetBtn12Appearance() {
+			// ensure the primary text exists
+			if (!btn12.querySelector('.btn-text')) {
+				// preserve strips if present; ensure label exists
+				const span = document.createElement('span');
+				span.className = 'btn-text';
+				span.textContent = 'Disintegrate';
+				btn12.insertBefore(span, btn12.firstChild);
+			}
+			// clear transforms on any strips
+			const stripsNow = btn12.querySelectorAll('.strip');
+			stripsNow.forEach(s => {
+				s.style.transform = '';
+				s.style.opacity = '1';
+				s.style.transitionDelay = '';
+				s.classList.remove('slide-up', 'slide-down');
+			});
+			// ensure button isn't left disabled or visually muted
+			btn12.disabled = false;
+		}
+
+		// Disintegrate effect for btn-12
+		btn12.addEventListener('mouseenter', () => {
+			const strips = btn12.querySelectorAll('.strip');
+			btn12.addEventListener('mousemove', (e) => {
+				const rect = btn12.getBoundingClientRect();
+				const x = e.clientX - rect.left;
+				const index = Math.floor(x / (rect.width / 10));
+				strips.forEach((strip, i) => {
+					if (Math.abs(i - index) <= 1) {
+						if (i % 2 === 0) {
+							strip.classList.add('slide-up');
+						} else {
+							strip.classList.add('slide-down');
+						}
+					} else {
+						strip.classList.remove('slide-up');
+						strip.classList.remove('slide-down');
+					}
+				});
+			});
+		});
+		btn12.addEventListener('mouseleave', () => {
+			const strips = btn12.querySelectorAll('.strip');
+			strips.forEach(strip => {
+				strip.classList.remove('slide-up');
+				strip.classList.remove('slide-down');
+			});
+		});
+
+		// Disintegrate on click: explode strips away from click point towards edges
+		btn12.addEventListener('click', (e) => {
+			const rect = btn12.getBoundingClientRect();
+			const strips = Array.from(btn12.querySelectorAll('.strip'));
+			if (strips.length === 0) return;
+			const localX = e.clientX - rect.left;
+			const clickedIndex = Math.min(strips.length - 1, Math.max(0, Math.floor(localX / (rect.width / strips.length))));
+			// animate each strip away from the click index
+			strips.forEach((strip, i) => {
+				const dist = Math.abs(i - clickedIndex);
+				const dir = i < clickedIndex ? -1 : (i > clickedIndex ? 1 : (Math.random() > 0.5 ? 1 : -1));
+				// movement increases with distance so outer pieces travel further to the edge
+				const baseMove = Math.max(80, Math.floor(rect.width * 0.12));
+				const move = baseMove + dist * 40;
+				// add a small vertical/rotation variance for visual interest
+				const vert = (10 + dist * 4) * (dir * (i % 2 === 0 ? 1 : -1));
+				const rot = (6 + dist * 2) * dir;
+				// slightly larger stagger so the overall effect is a bit slower but still snappy
+				strip.style.transitionDelay = (dist * 60) + 'ms';
+				strip.style.transform = `translateX(${dir * move}px) translateY(${vert}px) rotate(${rot}deg)`;
+				strip.style.opacity = '0';
+			});
+			// remove strips after animation completes (allowing for longer duration + stagger)
+			setTimeout(() => strips.forEach(s => s.remove()), 1200 + strips.length * 60);
+			// recreate strips after animation so the effect can be repeated
+			setTimeout(() => {
+				recreateStrips();
+			}, 1200 + strips.length * 40);
+
+			// Ensure the button visually returns to its original state after a short delay
+			// (clears inline transforms and re-adds missing text/strips if needed)
+			setTimeout(() => {
+				resetBtn12Appearance();
+				recreateStrips();
+			}, 3000);
+		});
+	}
+
+	// Particle explosion on click
+	const btn8 = document.querySelector('.btn-8');
+	if (btn8) {
+		btn8.addEventListener('click', (e) => {
+			const btn = e.target;
+			for (let i = 0; i < 40; i++) {
+				const particle = document.createElement('div');
+				particle.classList.add('particle');
+				// Random side: top, bottom, left, right
+				const sides = ['top', 'bottom', 'left', 'right'];
+				const side = sides[Math.floor(Math.random() * 4)];
+				let x, y, angle;
+				if (side === 'top') {
+					x = Math.random() * 100;
+					y = 0;
+					angle = (135 - (x / 100) * 90) * Math.PI / 180; // degrees to radians
+				} else if (side === 'bottom') {
+					x = Math.random() * 100;
+					y = 100;
+					angle = (225 + (x / 100) * 90) * Math.PI / 180;
+				} else if (side === 'left') {
+					x = 0;
+					y = Math.random() * 100;
+					angle = (315 + (y / 100) * 90) * Math.PI / 180;
+				} else {
+					x = 100;
+					y = Math.random() * 100;
+					angle = (135 + (y / 100) * 90) * Math.PI / 180;
+				}
+				particle.style.left = x + '%';
+				particle.style.top = y + '%';
+				const distance = Math.random() * 200 + 50;
+				const dx = Math.cos(angle) * distance;
+				const dy = Math.sin(angle) * distance;
+				particle.style.setProperty('--dx', dx + 'px');
+				particle.style.setProperty('--dy', dy + 'px');
+				btn.appendChild(particle);
+				setTimeout(() => particle.remove(), 1000);
+			}
+		});
+	}
+
+	// Loading morph on click
+	const btn9 = document.querySelector('.btn-9');
+	if (btn9) {
+		btn9.addEventListener('click', (e) => {
+			const btn = e.target;
+			btn.classList.toggle('loading');
+		});
+	}
+
+	const perButtonConfigs = {
+		'btn-1': { selector: '.btn-1', duration: 400, interval: 3000, initialDelay: 120 },
+		'btn-3': { selector: '.btn-3', duration: 500, interval: 3000, initialDelay: 240 },
+		'btn-4': { selector: '.btn-4', duration: 600, interval: 3000, initialDelay: 360 },
+		// Bob has its own slower loop and longer duration
+		'btn-5': { selector: '.btn-5', duration: 2800, interval: 4200, initialDelay: 600 },
+		'btn-6': { selector: '.btn-6', duration: 700, interval: 3000, initialDelay: 480 },
+		'btn-7': { selector: '.btn-7', duration: 0, interval: 3000, initialDelay: 720 },
+		'btn-11': { selector: '.btn-11', duration: 500, interval: 3000, initialDelay: 0 }
+	};
+
+	// Create hover-based handlers for each button so effects only run on mouse interaction
+	Object.values(perButtonConfigs).forEach(cfg => {
+		const el = document.querySelector(cfg.selector);
+		if (!el) return;
+
+		// mouseenter: start effect
+		el.addEventListener('mouseenter', () => {
+			// Shimmer (btn-6) uses transition to go to 150%
+			if (cfg.selector === '.btn-6') {
+				el.classList.add('shimmer-go');
+				return;
+			}
+
+			if (cfg.selector === '.btn-11') {
+				el.classList.add('shimmer-go');
+				return;
+			}
+
+			// For glow buttons (btn-7,8,9), if toggle off, pulse out on hover
+			if (['.btn-7', '.btn-8', '.btn-9'].includes(cfg.selector)) {
+				if (!animToggle.checked) {
+					el.classList.remove('pulse-in');
+					el.classList.add('pulse-out');
+				}
+				return;
+			}
+
+			// For other buttons, toggle the .auto class while hovered so CSS animations fire
+			el.classList.add('auto');
+		});
+
+		// mouseleave: stop or reverse effect
+		el.addEventListener('mouseleave', () => {
+			if (cfg.selector === '.btn-6') {
+				el.classList.remove('shimmer-go');
+				return;
+			}
+
+			if (cfg.selector === '.btn-11') {
+				el.classList.remove('shimmer-go');
+				return;
+			}
+
+			// For glow buttons, if toggle off, pulse in on leave
+			if (['.btn-7', '.btn-8', '.btn-9'].includes(cfg.selector)) {
+				if (!animToggle.checked) {
+					el.classList.remove('pulse-out');
+					el.classList.add('pulse-in');
+				}
+				return;
+			}
+
+			el.classList.remove('auto');
+		});
+	});
+	}
+
+	// collect unique variable names and store defaults
+		const uniqueVars = [...new Set(Object.values(targets).flat())];
+		// also include per-button text vars (e.g. --btn-1-text) so Reset restores them
+		const textVars = uniqueVars.map(v => v + '-text');
+		const allVars = [...new Set([...uniqueVars, ...textVars])];
+		const defaults = {};
+		allVars.forEach(v => {
+			defaults[v] = getComputedStyle(root).getPropertyValue(v).trim() || '';
+		});
+
+		/* bob shadow handled in CSS (fixed white/grey), JS detector removed */
+
+		const targetSelect = document.getElementById('target-select');
+		const colorPicker = document.getElementById('color-picker');
+		const applyBtn = document.getElementById('apply-color');
+		const resetBtn = document.getElementById('reset-colors');
+
+		// --- Helpers ---
+		function normalizeHex(val) {
+			if (!val) return '#000000';
+			val = val.trim();
+			if (val.startsWith('#')) return val;
+			if (val.startsWith('rgb')) return rgbToHex(val);
+			return val;
+		}
+
+		// Recompute and apply mainPanel bounds so animated content exactly matches center area
+		function applyMainPanelBounds() {
+			const leftPanel = document.querySelector('.left-panel');
+			const rightPanel = document.querySelector('.right-panel');
+			if (leftPanel && rightPanel && mainPanel) {
+				const lpRect = leftPanel.getBoundingClientRect();
+				const rpRect = rightPanel.getBoundingClientRect();
+				const leftPx = Math.max(0, Math.round(lpRect.right));
+				const rightPx = Math.max(0, Math.round(rpRect.left));
+				const widthPx = Math.max(0, rightPx - leftPx);
+				// position mainPanel exactly between panels
+				mainPanel.style.position = 'absolute';
+				// compute left relative to the .layout container (because .main-panel is inside it and body has padding)
+				const layout = document.querySelector('.layout');
+				const layoutRect = layout ? layout.getBoundingClientRect() : { left: 0, top: 0 };
+				const relLeft = Math.max(0, leftPx - Math.round(layoutRect.left));
+				mainPanel.style.left = relLeft + 'px';
+				mainPanel.style.top = '0px';
+				mainPanel.style.width = widthPx + 'px';
+				mainPanel.style.height = window.innerHeight + 'px';
+				mainPanel.style.margin = '0';
+				mainPanel.style.padding = '0';
+			}
+		}
+
+		function updatePicker() {
+			const target = targetSelect.value;
+			const vars = targets[target];
+			if (!vars || vars.length === 0) return;
+			const v = getComputedStyle(root).getPropertyValue(vars[0]).trim();
+			colorPicker.value = normalizeHex(v);
+		}
+
+		// apply selected color to chosen target(s)
+		applyBtn.addEventListener('click', () => {
+			const color = colorPicker.value;
+			const target = targetSelect.value;
+			const vars = targets[target] || [];
+			vars.forEach(variable => {
+				root.style.setProperty(variable, color);
+				// if this is a button color var (e.g. --btn-1), compute contrast and set a text color var
+				if (variable.startsWith('--btn-')) {
+					const rgb = hexToRgb(normalizeHex(color));
+					const contrast = getContrastColor(rgb.r, rgb.g, rgb.b);
+					root.style.setProperty(variable + '-text', contrast);
+				}
+			});
+		});
+
+		resetBtn.addEventListener('click', () => {
+			Object.entries(defaults).forEach(([k,v]) => {
+				root.style.setProperty(k, v);
+			});
+			updatePicker();
+		});
+
+		targetSelect.addEventListener('change', updatePicker);
+
+		// init picker with current value
+		updatePicker();
+
+		// helper: convert rgb(...) to hex
+		function rgbToHex(rgb) {
+			const m = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+			if (!m) return '#000000';
+			return '#'+[1,2,3].map(i => {
+				const n = parseInt(m[i], 10);
+				return n.toString(16).padStart(2, '0');
+			}).join('');
+		}
+
+		// helper: convert hex to rgb object {r,g,b}
+		function hexToRgb(hex) {
+			hex = hex.replace('#','');
+			if (hex.length === 3) {
+				hex = hex.split('').map(c => c + c).join('');
+			}
+			const num = parseInt(hex, 16);
+			return {
+				r: (num >> 16) & 255,
+				g: (num >> 8) & 255,
+				b: num & 255
+			};
+		}
+
+		// helper: determine readable contrast color (returns '#000000' or '#ffffff')
+		function getContrastColor(r, g, b) {
+			// Perceived brightness algorithm
+			const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+			return brightness > 186 ? '#000000' : '#ffffff';
+		}
+
+		// --- Animated view extractor: pulls the large inline block into a named function ---
+		function setupAnimatedViewControls() {
+			// Animated view setup
+			// --- Animated view: line creation and controls ---
+			let currentDirection = 'horizontal';
+			let currentPattern = 'straight';
+			let currentPosition = 'top'; // 'top' or 'bottom'
+			let animatedLines = [];
+
+			// create N lines and append to mainPanel so they sit inside the center area
+			function createLines(n = 3) {
+				removeLines();
+				console.log('[animated] createLines -> creating', n, 'lines');
+				for (let i = 0; i < n; i++) {
+					const el = document.createElement('div');
+					el.className = 'animated-line debug'; // mark debug so it's visible
+					el.dataset.index = i;
+					// pointer events none so they don't block UI
+					el.style.pointerEvents = 'none';
+					// ensure below header (header has z-index:2)
+					el.style.zIndex = '1';
+					// append into mainPanel (so they don't overlap side panels)
+					if (mainPanel) {
+						// make sure mainPanel is positioned to contain absolute children
+						const mpStyle = getComputedStyle(mainPanel).position;
+						if (mpStyle === 'static') mainPanel.style.position = 'relative';
+						mainPanel.appendChild(el);
+					} else {
+						document.body.appendChild(el);
+					}
+					animatedLines.push(el);
+				}
+				// add debug overlay and border on mainPanel
+				attachDebugOverlay();
+				updateLinePositions();
+			}
+
+			function removeLines() {
+				animatedLines.forEach(el => el.remove());
+				animatedLines = [];
+			}
+
+			// compute left edge (right edge of left-panel) and right edge (left edge of right-panel)
+			function getCenterBounds() {
+				const leftPanel = document.querySelector('.left-panel');
+				const rightPanel = document.querySelector('.right-panel');
+				const lp = leftPanel.getBoundingClientRect();
+				const rp = rightPanel.getBoundingClientRect();
+				return { left: Math.max(0, Math.round(lp.right)), right: Math.max(0, Math.round(rp.left)) };
+			}
+
+			function updateLinePositions() {
+				// compute center area from panels but place lines relative to mainPanel
+				const bounds = getCenterBounds();
+				const availableWidth = Math.max(0, bounds.right - bounds.left);
+				// prefer the animated color picker if present, fall back to the global colorPicker or CSS var
+				const animPicker = document.getElementById('animated-color-picker');
+				const color = (animPicker && animPicker.value)
+					? animPicker.value
+					: ((colorPicker && colorPicker.value) ? colorPicker.value : getComputedStyle(root).getPropertyValue('--animated-bg').trim() || '#ffffff');
+				const mpRect = mainPanel.getBoundingClientRect();
+				console.log('[animated] updateLinePositions -> mainPanel rect', mpRect, 'bounds', bounds, 'availableWidth', availableWidth);
+				animatedLines.forEach((line, i) => {
+					// place at top or bottom inside mainPanel
+					const lineHeight = 3; // px
+					const mpStyle = getComputedStyle(mainPanel);
+					const padTop = parseFloat(mpStyle.paddingTop) || 0;
+					const padBottom = parseFloat(mpStyle.paddingBottom) || 0;
+					if (currentPosition === 'top') {
+						line.style.top = padTop + 'px';
+					} else {
+						// place above the bottom padding
+						const h = mainPanel.clientHeight || mainPanel.getBoundingClientRect().height;
+						line.style.top = Math.max(0, h - padBottom - lineHeight) + 'px';
+					}
+					// inset a bit from the edges so lines don't visually reach under side panels
+					const mpWidth = mainPanel.clientWidth || mainPanel.getBoundingClientRect().width;
+					const inset = Math.min(120, Math.floor(mpWidth * 0.06));
+					line.style.left = inset + 'px';
+					line.style.width = Math.max(0, mpWidth - inset * 2) + 'px';
+					line.style.height = lineHeight + 'px';
+					// gradient sweep across the width
+					line.style.background = `linear-gradient(90deg, transparent 0%, ${color} 10%, rgba(255,255,255,0.95) 50%, ${color} 90%, transparent 100%)`;
+					line.style.backgroundSize = '200% 100%';
+					line.style.animation = `sweep 2.2s linear ${i * 0.15}s infinite`;
+				});
+				updateDebugOverlay(bounds, mpRect, animatedLines.length);
+			}
+
+			// Debug overlay helpers
+			let debugOverlayEl = null;
+			function attachDebugOverlay() {
+				if (!mainPanel) return;
+				mainPanel.classList.add('debug-border');
+				if (!debugOverlayEl) {
+					debugOverlayEl = document.createElement('div');
+					debugOverlayEl.className = 'debug-overlay';
+					debugOverlayEl.textContent = 'animated debug';
+					mainPanel.appendChild(debugOverlayEl);
+				}
+			}
+			function updateDebugOverlay(bounds, mpRect, count) {
+				if (!debugOverlayEl) return;
+				debugOverlayEl.innerHTML = `lines: ${count}<br>mp: ${Math.round(mpRect.width)}x${Math.round(mpRect.height)}<br>bounds L:${bounds.left} R:${bounds.right}`;
+			}
+
+			// wire controls
+			const directionSelect = document.getElementById('direction-select');
+			const patternSelect = document.getElementById('pattern-select');
+
+			// add a position control to the right-top (Top / Bottom)
+			const posRow = document.createElement('div');
+			posRow.className = 'direction-picker-row';
+			posRow.innerHTML = `<label>Position <select id="position-select"><option value="top">Top</option><option value="bottom">Bottom</option></select></label>`;
+			const rightTopEl = document.querySelector('.right-top');
+			if (rightTopEl) rightTopEl.insertBefore(posRow, rightTopEl.querySelector('.panel-buttons'));
+
+			// insert animated line color picker into the right-top panel dynamically
+			if (rightTopEl) {
+				const animColorRow = document.createElement('div');
+				animColorRow.className = 'color-picker-row';
+				animColorRow.innerHTML = `<label>Line Color <input id="animated-color-picker" type="color" value="#ffffff"/></label>`;
+				const btnArea = rightTopEl.querySelector('.panel-buttons');
+				if (btnArea) rightTopEl.insertBefore(animColorRow, btnArea);
+				else rightTopEl.appendChild(animColorRow);
+
+				// initialize picker from CSS var and wire updates
+				const acp = document.getElementById('animated-color-picker');
+				if (acp) {
+					const v = getComputedStyle(root).getPropertyValue('--animated-bg').trim() || '#ffffff';
+					acp.value = (v.startsWith('#') ? v : '#ffffff');
+					acp.addEventListener('input', (e) => {
+						root.style.setProperty('--animated-bg', e.target.value);
+						updateLinePositions();
+					});
+				}
+			}
+
+			const positionSelect = document.getElementById('position-select');
+			if (positionSelect) {
+				positionSelect.addEventListener('change', (e) => {
+					currentPosition = e.target.value;
+					updateLinePositions();
+				});
+			}
+
+			if (directionSelect) {
+				directionSelect.addEventListener('change', (e) => {
+					currentDirection = e.target.value;
+					// vertical not implemented for full-screen sweep currently, keep horizontal behavior
+					updateLinePositions();
+				});
+			}
+
+			if (patternSelect) {
+				patternSelect.addEventListener('change', (e) => {
+					currentPattern = e.target.value;
+					// pattern clip-path could be applied per-line in future; for now keep full-width lines
+					updateLinePositions();
+				});
+			}
+
+			// color picker apply/reset
+			if (applyBtn) {
+				applyBtn.addEventListener('click', () => {
+					const color = colorPicker.value;
+					root.style.setProperty('--animated-bg', color);
+					updateLinePositions();
+				});
+			}
+			if (resetBtn) {
+				resetBtn.addEventListener('click', () => {
+					root.style.setProperty('--animated-bg', '#ffffff');
+					if (colorPicker) colorPicker.value = '#ffffff';
+					updateLinePositions();
+				});
+			}
+
+			// create lines now
+			createLines(3);
+
+			// On resize: re-run the original math used on load for computing line left/width
+			function applyOriginalLineMath() {
+				const mpW = mainPanel.clientWidth || mainPanel.getBoundingClientRect().width;
+				const inset = Math.min(120, Math.floor(mpW * 0.06));
+				animatedLines.forEach((line) => {
+					line.style.left = inset + 'px';
+					line.style.width = Math.max(0, mpW - inset * 2) + 'px';
+				});
+				const mpRect = mainPanel.getBoundingClientRect();
+				const leftPx = Math.round(mpRect.left);
+				const rightPx = Math.round(mpRect.right);
+				updateDebugOverlay({ left: leftPx, right: rightPx }, mpRect, animatedLines.length);
+			}
+
+			window.addEventListener('resize', applyOriginalLineMath);
+
+			// remove lines when navigating away: listen for view class changes by using a MutationObserver
+			const observer = new MutationObserver(() => {
+				if (!document.body.classList.contains('view-animated')) {
+					removeLines();
+					window.removeEventListener('resize', applyOriginalLineMath);
+					observer.disconnect();
+				}
+			});
+			observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+		}
+
+
+
+
+		// --- Global animation toggle (looped animations vs hover-only) ---
+		const animToggle = document.getElementById('animations-toggle');
+		// store interval IDs so they can be cleared
+		const _loops = {};
+
+		function startAutoLoops() {
+			Object.values(perButtonConfigs).forEach(cfg => {
+				const el = document.querySelector(cfg.selector);
+				if (!el) return;
+
+				const trigger = () => {
+					// Shimmer (btn-6) plays forward then reverse
+					if (cfg.selector === '.btn-6') {
+						el.classList.add('shimmer-go');
+						setTimeout(() => el.classList.remove('shimmer-go'), 600);
+						return;
+					}
+
+					if (cfg.selector === '.btn-11') {
+						el.classList.add('shimmer-go');
+						setTimeout(() => el.classList.remove('shimmer-go'), 500);
+						return;
+					}
+
+					// For glow buttons (btn-7,8,9), add .auto for infinite pulse
+					if (['.btn-7', '.btn-8', '.btn-9'].includes(cfg.selector)) {
+						el.classList.add('auto');
+						return; // don't remove, infinite
+					}
+
+					// other buttons: add .auto briefly
+					el.classList.add('auto');
+					setTimeout(() => el.classList.remove('auto'), cfg.duration);
+				};
+
+				// run once after initialDelay (if provided) then on interval
+				const delay = cfg.initialDelay || 0;
+				const tid = setTimeout(() => {
+					trigger();
+					// store interval for repeated triggers
+					_loops[cfg.selector] = setInterval(trigger, cfg.interval);
+				}, delay);
+				// keep the initial timeout id as well so we can clear if toggled off early
+				_loops[cfg.selector + '::init'] = tid;
+			});
+		}
+
+		function stopAutoLoops() {
+			// clear all timers
+			Object.values(_loops).forEach(id => clearInterval(id) || clearTimeout(id));
+			Object.keys(_loops).forEach(k => delete _loops[k]);
+			// remove any effect classes left behind
+			Object.values(perButtonConfigs).forEach(cfg => {
+				const el = document.querySelector(cfg.selector);
+				if (!el) return;
+				el.classList.remove('auto');
+				el.classList.remove('shimmer-forward');
+				el.classList.remove('shimmer-reverse');
+				el.classList.remove('pulse-out');
+				el.classList.remove('pulse-in');
+				el.classList.remove('shimmer-go');
+			});
+		}
+
+		// wire the checkbox: checked = ON (looping), unchecked = OFF (hover-only)
+		if (animToggle) {
+			// ensure default is OFF (hover-only)
+			animToggle.checked = false;
+			animToggle.addEventListener('change', () => {
+				if (animToggle.checked) {
+					startAutoLoops();
+				} else {
+					stopAutoLoops();
+				}
+			});
+		}
+
+		// --- Background menu options ---
+		document.querySelectorAll('.menu-option[data-bg]').forEach(btn => {
+			btn.addEventListener('click', () => {
+				const type = btn.dataset.bg;
+					console.log('[animated] menu click, type=', type);
+					lastBgType = type;
+				// Remove previous view classes
+				document.body.classList.remove('view-gradient', 'view-animated', 'view-plain');
+				// Add new view class for dynamic content switching
+				document.body.classList.add('view-' + type);
+
+				// Reset center content
+				h1.textContent = '';
+				mainPanel.innerHTML = '';
+
+				// Reset right panel content
+				const rightTop = document.querySelector('.right-top');
+				const rightViewTitle = document.querySelector('.right-view-title');
+				rightViewTitle.textContent = '';
+				rightTop.innerHTML = '';
+
+				// If switching away from Animated, clear any inline sizing applied previously
+				if (type !== 'animated') {
+					// remove any inline styles that animated view applied
+					['position','left','top','width','height','margin','padding','overflow'].forEach(p => mainPanel.style[p] = '');
+					// restore helper class so plain view layout is enforced
+					mainPanel.classList.add('plain-view');
+				}
+
+				// Dynamically update center content
+				if (type === 'animated') {
+					// animated view uses its own layout; remove plain-view helper
+					mainPanel.classList.remove('plain-view');
+					h1.textContent = 'Animated';
+					// Clear previous content and insert a single static white line that spans the center area
+					// This is a minimal, reliable visual test: no animation, full-width line inside mainPanel
+					mainPanel.innerHTML = '';
+					// ensure mainPanel can contain absolutely positioned children
+					if (getComputedStyle(mainPanel).position === 'static') mainPanel.style.position = 'relative';
+
+							// Compute exact pixel bounds between the fixed side panels so mainPanel doesn't underlap them
+							applyMainPanelBounds();
+					// remove any existing test line
+					const existing = mainPanel.querySelector('.static-line');
+					if (existing) existing.remove();
+					const line = document.createElement('div');
+					line.className = 'static-line';
+					mainPanel.appendChild(line);
+					// center the static line inside mainPanel with a small inset so it never reaches the side panels
+					const mpW = mainPanel.clientWidth || mainPanel.getBoundingClientRect().width;
+					const inset = Math.min(120, Math.floor(mpW * 0.06)); // at most 120px, or 6% of width
+					line.style.left = inset + 'px';
+					line.style.width = Math.max(0, mpW - inset * 2) + 'px';
+					// adjust for any padding inside mainPanel so the vertical position aligns visually
+					const mpStyle = getComputedStyle(mainPanel);
+					const padTop = parseFloat(mpStyle.paddingTop) || 0;
+					line.style.top = padTop + 'px';
+
+					// ensure the mainPanel overflow hides anything outside the bounds (defensive)
+					mainPanel.style.overflow = 'hidden';
+				} else if (type === 'gradient') {
+					h1.textContent = 'Gradient';
+					mainPanel.innerHTML = '';
+				}
+
+				// Dynamically update right panel content
+				if (type === 'animated') {
+						h1.textContent = 'Animated';
+
+						// Clear existing center content
+						mainPanel.innerHTML = '';
+
+						// Make sure it can host absolutely-positioned elements if needed
+						if (getComputedStyle(mainPanel).position === 'static') {
+							mainPanel.style.position = 'relative';
+						}
+
+						// Remove old line if any
+						const old = mainPanel.querySelector('.moving-line');
+						if (old) old.remove();
+
+						// Create the line
+						const line = document.createElement('div');
+						line.className = 'moving-line';
+						mainPanel.appendChild(line);
+
+						// Make sure nothing spills out of this region
+						mainPanel.style.overflow = 'hidden';
+					}
+					else if (type === 'gradient') {
+					rightViewTitle.textContent = 'Gradient';
+					rightTop.innerHTML = '';
+				} else {
+					rightViewTitle.textContent = '';
+					rightTop.innerHTML = ''; // for plain, but plain not here
+				}
+			});
+		});
+		// --- Foreground menu options ---
+		document.querySelectorAll('.menu-option[data-fg]').forEach(btn => {
+			btn.addEventListener('click', () => {
+				const type = btn.dataset.fg;
+				if (type === 'buttons') {
+					document.body.classList.remove('view-gradient', 'view-animated', 'view-plain');
+					document.body.classList.add('view-plain');
+
+					// Set background color back to dark
+					document.body.style.backgroundColor = getComputedStyle(root).getPropertyValue('--bg').trim();
+
+					const rightTop = document.querySelector('.right-top');
+					const rightViewTitle = document.querySelector('.right-view-title');
+
+				// Reset center content and clear any animated inline styles
+				h1.textContent = '';
+				// clear inline styles that may have been applied by Animated view
+				['position','left','top','width','height','margin','padding','overflow'].forEach(p => mainPanel.style[p] = '');
+				// ensure plain helper class is present to restore layout and scrolling
+				mainPanel.classList.add('plain-view');
+				mainPanel.innerHTML = '';
+
+				// Reset right panel content
+				rightViewTitle.textContent = '';
+				rightTop.innerHTML = '';
+
+				// Dynamically update center content
+				mainPanel.innerHTML = buttonGridHTML;
+				setupButtons();
+				h1.textContent = 'Button Showcase';
+							// Dynamically update right panel content
+						rightViewTitle.textContent = 'Plain';
+						rightTop.innerHTML = `
+							<h2>Theme Switcher</h2>
+							<label for="target-select">Filter</label>
+							<select id="target-select">
+								<option value="all">All Buttons</option>
+								<option value="btn1">Pulse</option>
+								<option value="btn3">Glow</option>
+								<option value="btn4">Bounce</option>
+								<option value="btn5">Bob</option>
+								<option value="btn6">Shimmer</option>
+								<option value="btn7">Subtle Glow</option>
+								<option value="btn8">Particle Explosion</option>
+								<option value="btn9">Loading Morph</option>
+								<option value="btn10">3D Push</option>
+								<option value="btn11">Glassmorphic</option>
+								<option value="btn12">Disintegrate</option>
+								<option value="btn13">Gradient Fill</option>
+								<option value="btn9">High Glow</option>
+								<option value="left-panel">Left Panel</option>
+								<option value="right-panel">Right Panel</option>
+								<option value="text">Text Color</option>
+								<option value="accent">Accent</option>
+							</select>
+							<div class="color-picker-row">
+								<label>Color
+									<input id="color-picker" type="color" value="#ffffff" />
+								</label>
+							</div>
+							<div class="panel-buttons">
+								<button id="apply-color" class="btn">Apply</button>
+								<button id="reset-colors" class="btn">Reset</button>
+							</div>
+						`;
+						// Re-setup listeners after DOM change
+						setTimeout(() => {
+							const targetSelect = document.getElementById('target-select');
+							const colorPicker = document.getElementById('color-picker');
+							const applyBtn = document.getElementById('apply-color');
+							const resetBtn = document.getElementById('reset-colors');
+
+							if (targetSelect && colorPicker && applyBtn && resetBtn) {
+								function updatePicker() {
+									const target = targetSelect.value;
+									const vars = targets[target];
+									if (!vars || vars.length === 0) return;
+									const v = getComputedStyle(root).getPropertyValue(vars[0]).trim();
+									colorPicker.value = normalizeHex(v);
+								}
+
+								applyBtn.addEventListener('click', () => {
+									const color = colorPicker.value;
+									const target = targetSelect.value;
+									const vars = targets[target] || [];
+									vars.forEach(variable => {
+										root.style.setProperty(variable, color);
+										if (variable.startsWith('--btn-')) {
+											const rgb = hexToRgb(normalizeHex(color));
+											const contrast = getContrastColor(rgb.r, rgb.g, rgb.b);
+											root.style.setProperty(variable + '-text', contrast);
+										}
+									});
+								});
+
+								resetBtn.addEventListener('click', () => {
+									Object.entries(defaults).forEach(([k,v]) => {
+										root.style.setProperty(k, v);
+									});
+									updatePicker();
+								});
+
+								targetSelect.addEventListener('change', updatePicker);
+								updatePicker();
+
+								document.querySelector('.color-picker-row').addEventListener('click', () => {
+									document.getElementById('color-picker').click();
+								});
+							} else {
+								// Animated view: delegate to extracted setup function
+								setupAnimatedViewControls();
+							}
+							}, 0);
+				}
+				// TODO: Handle other foreground options
+			});
+		});
+
+
+
+
+});
+
 document.addEventListener('DOMContentLoaded', () => {
 	const root = document.documentElement;
 
