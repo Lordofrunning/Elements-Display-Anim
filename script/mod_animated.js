@@ -11,8 +11,9 @@ export function setupAnimatedViewControls() {
   function createLines(n = 3) {
     removeLines();
     for (let i = 0; i < n; i++) {
-      const el = document.createElement('div');
-      el.className = 'animated-line debug';
+  const el = document.createElement('div');
+  // Do not add the global 'debug' class to lines — keep debug overlay separately
+  el.className = 'animated-line';
       el.dataset.index = i;
       el.style.pointerEvents = 'none';
       el.style.zIndex = '1';
@@ -70,13 +71,52 @@ export function setupAnimatedViewControls() {
   function updateDebugOverlay(bounds, mpRect, count) { if (!debugOverlayEl) return; debugOverlayEl.innerHTML = `lines: ${count}<br>mp: ${Math.round(mpRect.width)}x${Math.round(mpRect.height)}<br>bounds L:${bounds.left} R:${bounds.right}`; }
 
   const rightTopEl = document.querySelector('.right-top');
-  if (rightTopEl) {
+    if (rightTopEl) {
     const posRow = document.createElement('div'); posRow.className = 'direction-picker-row'; posRow.innerHTML = `<label>Position <select id="position-select"><option value="top">Top</option><option value="bottom">Bottom</option></select></label>`;
     rightTopEl.insertBefore(posRow, rightTopEl.querySelector('.panel-buttons'));
     const animColorRow = document.createElement('div'); animColorRow.className = 'color-picker-row'; animColorRow.innerHTML = `<label>Line Color <input id="animated-color-picker" type="color" value="#ffffff"/></label>`;
     const btnArea = rightTopEl.querySelector('.panel-buttons'); if (btnArea) rightTopEl.insertBefore(animColorRow, btnArea); else rightTopEl.appendChild(animColorRow);
-    const acp = document.getElementById('animated-color-picker'); if (acp) { const v = getComputedStyle(root).getPropertyValue('--animated-bg').trim() || '#ffffff'; acp.value = (v.startsWith('#') ? v : '#ffffff'); acp.addEventListener('input', (e) => { root.style.setProperty('--animated-bg', e.target.value); updateLinePositions(); }); }
-  }
+
+    // add apply / reset buttons under the color picker
+    const btnRow = document.createElement('div');
+    btnRow.className = 'panel-buttons animated-apply-row';
+    btnRow.style.marginTop = '8px';
+    btnRow.innerHTML = `<button id="animated-apply" class="btn">Apply</button><button id="animated-reset" class="btn">Reset</button>`;
+    if (btnArea) rightTopEl.insertBefore(btnRow, btnArea);
+    else rightTopEl.appendChild(btnRow);
+
+    const acp = document.getElementById('animated-color-picker');
+    if (acp) {
+      const v = getComputedStyle(root).getPropertyValue('--animated-bg').trim() || '#ffffff';
+      acp.value = (v.startsWith('#') ? v : '#ffffff');
+
+      // live-preview still useful, but Apply will commit the chosen color explicitly
+      acp.addEventListener('input', (e) => {
+        // don't overwrite the CSS var until Apply, but allow immediate preview if desired
+        // Here we choose to only preview visually by updating lines without changing the CSS var
+        updateLinePositions();
+      });
+
+      // Apply button: write CSS var and refresh
+      const applyBtn = document.getElementById('animated-apply');
+      if (applyBtn) {
+        applyBtn.addEventListener('click', () => {
+          root.style.setProperty('--animated-bg', acp.value);
+          updateLinePositions();
+        });
+      }
+
+      // Reset button: reset CSS var to white and update picker + lines
+      const resetBtn = document.getElementById('animated-reset');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+          root.style.setProperty('--animated-bg', '#ffffff');
+          acp.value = '#ffffff';
+          updateLinePositions();
+        });
+      }
+    }
+    }
 
   const positionSelect = document.getElementById('position-select'); if (positionSelect) positionSelect.addEventListener('change', (e) => { currentPosition = e.target.value; updateLinePositions(); });
 
