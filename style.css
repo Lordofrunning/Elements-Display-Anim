@@ -697,6 +697,13 @@ body.view-animated .main-panel {
   transition: transform 0.3s ease;
 }
 
+/* enhanced disintegrate transitions: strips move outward on click */
+.btn-12 .strip {
+  will-change: transform, opacity;
+  /* slightly slower: transform 900ms, opacity 700ms for a gentler disintegration */
+  transition: transform 900ms cubic-bezier(0.22,1,0.36,1), opacity 700ms ease;
+}
+
 .btn-12 .strip.slide-up {
   transform: translateY(-100px);
 }

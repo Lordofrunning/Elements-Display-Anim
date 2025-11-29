@@ -68,6 +68,41 @@ document.addEventListener('DOMContentLoaded', () => {
 			btn12.appendChild(strip);
 		}
 
+		// helper: recreate strips (idempotent)
+		function recreateStrips() {
+			if (!btn12.querySelector('.strip')) {
+				for (let j = 0; j < 10; j++) {
+					const strip = document.createElement('div');
+					strip.classList.add('strip');
+					strip.style.left = (j * 10) + '%';
+					strip.style.width = '10%';
+					btn12.appendChild(strip);
+				}
+			}
+		}
+
+		// helper: restore visual state of the button (clear inline transforms/styles)
+		function resetBtn12Appearance() {
+			// ensure the primary text exists
+			if (!btn12.querySelector('.btn-text')) {
+				// preserve strips if present; ensure label exists
+				const span = document.createElement('span');
+				span.className = 'btn-text';
+				span.textContent = 'Disintegrate';
+				btn12.insertBefore(span, btn12.firstChild);
+			}
+			// clear transforms on any strips
+			const stripsNow = btn12.querySelectorAll('.strip');
+			stripsNow.forEach(s => {
+				s.style.transform = '';
+				s.style.opacity = '1';
+				s.style.transitionDelay = '';
+				s.classList.remove('slide-up', 'slide-down');
+			});
+			// ensure button isn't left disabled or visually muted
+			btn12.disabled = false;
+		}
+
 		// Disintegrate effect for btn-12
 		btn12.addEventListener('mouseenter', () => {
 			const strips = btn12.querySelectorAll('.strip');
@@ -95,6 +130,43 @@ document.addEventListener('DOMContentLoaded', () => {
 				strip.classList.remove('slide-up');
 				strip.classList.remove('slide-down');
 			});
+		});
+
+		// Disintegrate on click: explode strips away from click point towards edges
+		btn12.addEventListener('click', (e) => {
+			const rect = btn12.getBoundingClientRect();
+			const strips = Array.from(btn12.querySelectorAll('.strip'));
+			if (strips.length === 0) return;
+			const localX = e.clientX - rect.left;
+			const clickedIndex = Math.min(strips.length - 1, Math.max(0, Math.floor(localX / (rect.width / strips.length))));
+			// animate each strip away from the click index
+			strips.forEach((strip, i) => {
+				const dist = Math.abs(i - clickedIndex);
+				const dir = i < clickedIndex ? -1 : (i > clickedIndex ? 1 : (Math.random() > 0.5 ? 1 : -1));
+				// movement increases with distance so outer pieces travel further to the edge
+				const baseMove = Math.max(80, Math.floor(rect.width * 0.12));
+				const move = baseMove + dist * 40;
+				// add a small vertical/rotation variance for visual interest
+				const vert = (10 + dist * 4) * (dir * (i % 2 === 0 ? 1 : -1));
+				const rot = (6 + dist * 2) * dir;
+				// slightly larger stagger so the overall effect is a bit slower but still snappy
+				strip.style.transitionDelay = (dist * 60) + 'ms';
+				strip.style.transform = `translateX(${dir * move}px) translateY(${vert}px) rotate(${rot}deg)`;
+				strip.style.opacity = '0';
+			});
+			// remove strips after animation completes (allowing for longer duration + stagger)
+			setTimeout(() => strips.forEach(s => s.remove()), 1200 + strips.length * 60);
+			// recreate strips after animation so the effect can be repeated
+			setTimeout(() => {
+				recreateStrips();
+			}, 1200 + strips.length * 40);
+
+			// Ensure the button visually returns to its original state after a short delay
+			// (clears inline transforms and re-adds missing text/strips if needed)
+			setTimeout(() => {
+				resetBtn12Appearance();
+				recreateStrips();
+			}, 3000);
 		});
 	}
 
