@@ -13,42 +13,33 @@ export function setupAnimatedViewControls() {
     if (staticLine) staticLine.remove();
   }
 
-  // Ensure there's exactly one moving-line to control
-  let movingLine = mainPanel ? mainPanel.querySelector('.moving-line') : null;
-  if (mainPanel && !movingLine) {
-    movingLine = document.createElement('div');
-    movingLine.className = 'moving-line';
-    mainPanel.appendChild(movingLine);
-  }
-  if (mainPanel) mainPanel.style.overflow = 'hidden';
+  // Manage multiple moving-line elements (user-configurable). Default to 3.
   let currentDirection = 'horizontal';
   let currentPattern = 'straight';
   let currentPosition = 'top';
-  let animatedLines = [];
-
-  function createLines(n = 3) {
-    removeLines();
+  const DEFAULT_LINE_COUNT = 3;
+  let movingLines = mainPanel ? Array.from(mainPanel.querySelectorAll('.moving-line')) : [];
+  function removeMovingLines() {
+    movingLines.forEach(l => l.remove());
+    movingLines = [];
+  }
+  function createMovingLines(n) {
+    removeMovingLines();
     for (let i = 0; i < n; i++) {
-  const el = document.createElement('div');
-  // Do not add the global 'debug' class to lines — keep debug overlay separately
-  el.className = 'animated-line';
+      const el = document.createElement('div');
+      el.className = 'moving-line';
       el.dataset.index = i;
       el.style.pointerEvents = 'none';
       el.style.zIndex = '1';
-      if (mainPanel) {
-        const mpStyle = getComputedStyle(mainPanel).position;
-        if (mpStyle === 'static') mainPanel.style.position = 'relative';
-        mainPanel.appendChild(el);
-      } else {
-        document.body.appendChild(el);
-      }
-      animatedLines.push(el);
+      if (getComputedStyle(mainPanel).position === 'static') mainPanel.style.position = 'relative';
+      mainPanel.appendChild(el);
+      movingLines.push(el);
     }
-    attachDebugOverlay();
-    updateLinePositions();
   }
+  if (!movingLines || movingLines.length === 0) createMovingLines(DEFAULT_LINE_COUNT);
+  if (mainPanel) mainPanel.style.overflow = 'hidden';
 
-  function removeLines() { animatedLines.forEach(el => el.remove()); animatedLines = []; }
+  // legacy multi-short-line helpers removed; this module now manages `movingLines`.
 
   function getCenterBounds() {
     const leftPanel = document.querySelector('.left-panel');
@@ -63,28 +54,48 @@ export function setupAnimatedViewControls() {
     const animPicker = document.getElementById('animated-color-picker');
     const color = (animPicker && animPicker.value) ? animPicker.value : (document.getElementById('color-picker') ? document.getElementById('color-picker').value : getComputedStyle(root).getPropertyValue('--animated-bg').trim() || '#ffffff');
     const mpRect = mainPanel.getBoundingClientRect();
-    // apply sizing and position to the single moving line
-    if (movingLine) {
-      const lineHeight = 3;
-      const mpStyle = getComputedStyle(mainPanel);
-      const padTop = parseFloat(mpStyle.paddingTop) || 0;
-      const padBottom = parseFloat(mpStyle.paddingBottom) || 0;
-      if (currentPosition === 'top') movingLine.style.top = padTop + 'px'; else { const h = mainPanel.clientHeight || mainPanel.getBoundingClientRect().height; movingLine.style.top = Math.max(0, h - padBottom - lineHeight) + 'px'; }
-      const mpWidth = mainPanel.clientWidth || mainPanel.getBoundingClientRect().width;
-      const inset = Math.min(120, Math.floor(mpWidth * 0.06));
-      movingLine.style.left = inset + 'px';
-      movingLine.style.width = Math.max(0, mpWidth - inset * 2) + 'px';
-      movingLine.style.height = lineHeight + 'px';
-  // build a gradient that uses only shades/alpha of the chosen color (no white)
-  const rgb = hexToRgb(color);
-  const soft = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`;
-  const strong = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
-  movingLine.style.background = `linear-gradient(90deg, transparent 0%, ${soft} 10%, ${strong} 50%, ${soft} 90%, transparent 100%)`;
-      movingLine.style.backgroundSize = '200% 100%';
-      // ensure it uses the full-sweep animation (CSS class has line-move; keep sweep for gradient position)
-      movingLine.style.animation = `line-move 2.2s linear infinite`;
-    }
-    updateDebugOverlay(bounds, mpRect, movingLine ? 1 : 0);
+    const lineHeight = 3;
+    const mpStyle = getComputedStyle(mainPanel);
+    const padTop = parseFloat(mpStyle.paddingTop) || 0;
+    const padBottom = parseFloat(mpStyle.paddingBottom) || 0;
+    const mpHeight = mainPanel.clientHeight || mainPanel.getBoundingClientRect().height;
+    const available = Math.max(0, mpHeight - padTop - padBottom - lineHeight);
+    const count = movingLines.length;
+    const mpWidth = mainPanel.clientWidth || mainPanel.getBoundingClientRect().width;
+    const inset = Math.min(120, Math.floor(mpWidth * 0.06));
+    const rgb = hexToRgb(color);
+    const soft = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`;
+    const strong = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
+    let spacing = 0;
+    if (count > 1) spacing = available / (count - 1);
+
+    movingLines.forEach((line, i) => {
+      let y = 0;
+      if (count === 1) {
+        if (currentPosition === 'top') y = padTop;
+        else if (currentPosition === 'bottom') y = Math.max(0, padTop + available);
+        else y = Math.max(0, Math.round(mpHeight / 2 - lineHeight / 2));
+      } else {
+        if (currentPosition === 'top') {
+          y = padTop + Math.round(spacing * i);
+        } else if (currentPosition === 'bottom') {
+          const lastStart = padTop + Math.round(available - spacing * (count - 1));
+          y = lastStart + Math.round(spacing * i);
+        } else {
+          const groupHeight = spacing * (count - 1);
+          const start = Math.round(mpHeight / 2 - groupHeight / 2 - lineHeight / 2);
+          y = Math.max(padTop, start + Math.round(spacing * i));
+        }
+      }
+      line.style.top = y + 'px';
+      line.style.left = inset + 'px';
+      line.style.width = Math.max(0, mpWidth - inset * 2) + 'px';
+      line.style.height = lineHeight + 'px';
+      line.style.background = `linear-gradient(90deg, transparent 0%, ${soft} 10%, ${strong} 50%, ${soft} 90%, transparent 100%)`;
+      line.style.backgroundSize = '200% 100%';
+      line.style.animation = `line-move 2.2s linear ${i * 0.12}s infinite`;
+    });
+    updateDebugOverlay(bounds, mpRect, movingLines.length);
   }
 
   let debugOverlayEl = null;
@@ -96,10 +107,17 @@ export function setupAnimatedViewControls() {
 
   const rightTopEl = document.querySelector('.right-top');
     if (rightTopEl) {
-    const posRow = document.createElement('div'); posRow.className = 'direction-picker-row'; posRow.innerHTML = `<label>Position <select id="position-select"><option value="top">Top</option><option value="bottom">Bottom</option></select></label>`;
+  const posRow = document.createElement('div'); posRow.className = 'direction-picker-row'; posRow.innerHTML = `<label>Position <select id="position-select"><option value="top">Top</option><option value="middle">Middle</option><option value="bottom">Bottom</option></select></label>`;
     rightTopEl.insertBefore(posRow, rightTopEl.querySelector('.panel-buttons'));
     const animColorRow = document.createElement('div'); animColorRow.className = 'color-picker-row'; animColorRow.innerHTML = `<label>Line Color <input id="animated-color-picker" type="color" value="#ffffff"/></label>`;
-    const btnArea = rightTopEl.querySelector('.panel-buttons'); if (btnArea) rightTopEl.insertBefore(animColorRow, btnArea); else rightTopEl.appendChild(animColorRow);
+  const btnArea = rightTopEl.querySelector('.panel-buttons'); if (btnArea) rightTopEl.insertBefore(animColorRow, btnArea); else rightTopEl.appendChild(animColorRow);
+
+  // add lines count selector
+  const countRow = document.createElement('div');
+  countRow.className = 'count-picker-row';
+  countRow.style.marginTop = '8px';
+  countRow.innerHTML = `<label>Lines <select id="lines-count"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="8">8</option></select></label>`;
+  if (btnArea) rightTopEl.insertBefore(countRow, btnArea); else rightTopEl.appendChild(countRow);
 
     // add apply / reset buttons under the color picker
     const btnRow = document.createElement('div');
@@ -137,6 +155,15 @@ export function setupAnimatedViewControls() {
           updateLinePositions();
         });
       }
+      // lines count wiring
+      const linesSelect = document.getElementById('lines-count');
+      if (linesSelect) {
+        linesSelect.addEventListener('change', (e) => {
+          const n = parseInt(e.target.value, 10) || DEFAULT_LINE_COUNT;
+          createMovingLines(n);
+          updateLinePositions();
+        });
+      }
     }
     }
 
@@ -148,15 +175,16 @@ export function setupAnimatedViewControls() {
   function applyOriginalLineMath() {
     const mpW = mainPanel.clientWidth || mainPanel.getBoundingClientRect().width;
     const inset = Math.min(120, Math.floor(mpW * 0.06));
-    if (movingLine) { movingLine.style.left = inset + 'px'; movingLine.style.width = Math.max(0, mpW - inset * 2) + 'px'; }
+    // update all moving lines width/left
+    movingLines.forEach(l => { l.style.left = inset + 'px'; l.style.width = Math.max(0, mpW - inset * 2) + 'px'; });
     const mpRect = mainPanel.getBoundingClientRect();
     const leftPx = Math.round(mpRect.left);
     const rightPx = Math.round(mpRect.right);
-    updateDebugOverlay({ left: leftPx, right: rightPx }, mpRect, movingLine ? 1 : 0);
+    updateDebugOverlay({ left: leftPx, right: rightPx }, mpRect, movingLines.length);
   }
 
   window.addEventListener('resize', applyOriginalLineMath);
 
-  const observer = new MutationObserver(() => { if (!document.body.classList.contains('view-animated')) { if (movingLine) movingLine.remove(); window.removeEventListener('resize', applyOriginalLineMath); observer.disconnect(); } });
+  const observer = new MutationObserver(() => { if (!document.body.classList.contains('view-animated')) { removeMovingLines(); window.removeEventListener('resize', applyOriginalLineMath); observer.disconnect(); } });
   observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 }
