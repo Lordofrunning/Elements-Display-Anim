@@ -36,7 +36,8 @@ export function setupAnimatedViewControls() {
       movingLines.push(el);
     }
   }
-  if (!movingLines || movingLines.length === 0) createMovingLines(DEFAULT_LINE_COUNT);
+  // If existing markup provided fewer than the default, create the default set.
+  if (!movingLines || movingLines.length < DEFAULT_LINE_COUNT) createMovingLines(DEFAULT_LINE_COUNT);
   if (mainPanel) mainPanel.style.overflow = 'hidden';
 
   // legacy multi-short-line helpers removed; this module now manages `movingLines`.
@@ -89,10 +90,12 @@ export function setupAnimatedViewControls() {
             y = Math.max(padTop, start + Math.round(spacing * i));
           }
         }
-        line.style.top = y + 'px';
-        line.style.left = inset + 'px';
-        line.style.width = Math.max(0, mpWidth - inset * 2) + 'px';
-        line.style.height = lineThickness + 'px';
+  line.style.position = 'absolute';
+  line.style.zIndex = '1';
+  line.style.top = y + 'px';
+  line.style.left = inset + 'px';
+  line.style.width = Math.max(0, mpWidth - inset * 2) + 'px';
+  line.style.height = lineThickness + 'px';
         line.style.background = `linear-gradient(90deg, transparent 0%, ${soft} 10%, ${strong} 50%, ${soft} 90%, transparent 100%)`;
         line.style.backgroundSize = '200% 100%';
         line.style.animation = `line-move 2.2s linear ${i * 0.12}s infinite`;
@@ -121,14 +124,22 @@ export function setupAnimatedViewControls() {
             x = Math.max(padLeft + inset, startX + Math.round(spacingX * i));
           }
         }
-        line.style.left = x + 'px';
-        line.style.top = inset + 'px';
+        // For vertical mode we position lines fixed to the viewport so they start at the
+        // very top of the screen (allowing header to layer above them). Compute left using
+        // the mainPanel's bounding rect (mpRect) to align within the main area.
+        const absoluteLeft = Math.round(mpRect.left) + x;
+        line.style.position = 'fixed';
+        line.style.left = absoluteLeft + 'px';
+        line.style.top = '0px';
         line.style.width = lineWidth + 'px';
-        line.style.height = Math.max(0, mpHeight - inset * 2) + 'px';
+        line.style.height = Math.max(0, window.innerHeight || document.documentElement.clientHeight) + 'px';
         // vertical gradient
         line.style.background = `linear-gradient(180deg, transparent 0%, ${soft} 10%, ${strong} 50%, ${soft} 90%, transparent 100%)`;
         line.style.backgroundSize = '100% 200%';
+        // keep animation offset per line for subtle motion
         line.style.animation = `line-move-vertical 2.2s linear ${i * 0.12}s infinite`;
+        // lower z-index when fixed so header text can render above
+        line.style.zIndex = '0';
       });
     }
     updateDebugOverlay(bounds, mpRect, movingLines.length);
