@@ -231,20 +231,29 @@ export function setupButtons() {
         btn11.appendChild(svg);
 
         const svgPaths = Array.from(svg.querySelectorAll('path'));
-        svgPaths.forEach((ln, i) => {
+        // Start all paths at the same time (no stagger). Duration scales with path length so
+        // longer lines take slightly longer to draw while all begin simultaneously.
+        svgPaths.forEach((ln) => {
           const length = ln.getTotalLength();
           ln.style.strokeDasharray = length;
           ln.style.strokeDashoffset = length;
-          const delay = i * 22;
-          ln.style.transition = `stroke-dashoffset 420ms ${delay}ms cubic-bezier(0.2,1,0.2,1), opacity 380ms ${delay}ms ease-out`;
+          const delay = 0; // same start for all
+          // duration scales with length (clamped)
+          const duration = Math.round(Math.max(220, Math.min(900, 240 + length * 0.6)));
+          const opacityDur = Math.max(180, duration - 40);
+          ln.style.transition = `stroke-dashoffset ${duration}ms ${delay}ms cubic-bezier(0.2,1,0.2,1), opacity ${opacityDur}ms ${delay}ms ease-out`;
           // force reflow
           ln.getBoundingClientRect();
           ln.style.opacity = '1';
           ln.style.strokeDashoffset = '0';
         });
 
-        setTimeout(() => { svg.style.transition = 'opacity 700ms ease'; svg.style.opacity = '0'; }, 700 + svgPaths.length * 22);
-        setTimeout(() => { svg.remove(); }, 1400 + svgPaths.length * 22);
+        // Fade and remove after the longest possible draw completes
+        const maxDuration = svgPaths.reduce((m, p) => {
+          try { return Math.max(m, Math.round(Math.max(220, Math.min(900, 240 + p.getTotalLength() * 0.6)))); } catch (e) { return m; }
+        }, 0);
+        setTimeout(() => { svg.style.transition = 'opacity 700ms ease'; svg.style.opacity = '0'; }, 200 + maxDuration);
+        setTimeout(() => { svg.remove(); }, 900 + maxDuration);
 
         // subtle press visual
         btn11.classList.add('clicked-glass');
