@@ -10,6 +10,12 @@ export function setupAnimatedViewControls() {
     if (staticLine) staticLine.remove();
   }
 
+  // Remove any leftover moving-line elements (they may have been created
+  // elsewhere and could remain inside the scrolling main panel). We want
+  // moving lines that represent background decorations to be viewport-fixed
+  // (appended to document.body) and not scroll with page content.
+  document.querySelectorAll('.moving-line').forEach(el => el.remove());
+
   let currentDirection = 'horizontal';
   let currentPosition = 'top';
   const DEFAULT_LINE_COUNT = 3;
@@ -28,8 +34,12 @@ export function setupAnimatedViewControls() {
       el.dataset.index = i;
       el.style.pointerEvents = 'none';
       el.style.zIndex = '1';
+      // create moving lines as top-level viewport elements by default so
+      // vertical/diagonal variants can be forced fixed without being trapped
+      // inside a transformed/scrolling ancestor. Horizontal branch will
+      // reparent into `mainPanel` when needed.
       if (getComputedStyle(mainPanel).position === 'static') mainPanel.style.position = 'relative';
-      mainPanel.appendChild(el);
+      document.body.appendChild(el);
       movingLines.push(el);
     }
   }
@@ -104,7 +114,10 @@ export function setupAnimatedViewControls() {
             y = Math.max(padTop, start + Math.round(spacing * i));
           }
         }
-        line.style.position = 'absolute';
+  // ensure absolute-positioned lines are children of the main panel
+  if (line.parentNode !== mainPanel) mainPanel.appendChild(line);
+  line.classList.remove('moving-line--fixed');
+  line.style.position = 'absolute';
         line.style.zIndex = '1';
         line.style.top = y + 'px';
         line.style.left = inset + 'px';
@@ -139,10 +152,14 @@ export function setupAnimatedViewControls() {
             x = Math.max(padLeft + inset, startX + Math.round(spacingX * i));
           }
         }
-        const absoluteLeft = Math.round(mpRect.left) + x;
-        line.style.position = 'fixed';
-        line.style.left = absoluteLeft + 'px';
-        line.style.top = '0px';
+  const absoluteLeft = Math.round(mpRect.left) + x;
+  // ensure fixed-positioned lines are children of the document body so they are
+  // truly fixed to the viewport (avoids transform/containment issues)
+  if (line.parentNode !== document.body) document.body.appendChild(line);
+  line.classList.add('moving-line--fixed');
+  line.style.position = 'fixed';
+  line.style.left = absoluteLeft + 'px';
+  line.style.top = '0px';
         line.style.width = lineWidth + 'px';
         line.style.height = Math.max(0, window.innerHeight || document.documentElement.clientHeight) + 'px';
         line.style.background = `linear-gradient(180deg, transparent 0%, ${soft} 10%, ${strong} 50%, ${soft} 90%, transparent 100%)`;
@@ -250,8 +267,11 @@ export function setupAnimatedViewControls() {
     const yMax = window.innerHeight;
     const rangeVP = computeLineTRangeRect(sx_vp, sy_vp, dirX, dirY, xMin, xMax, yMin, yMax);
           if (!rangeVP) {
-            // fallback: centered diagonal across viewport
+            // fallback: centered diagonal across the viewport (fixed)
             const cx = Math.round(window.innerWidth / 2), cy = Math.round(window.innerHeight / 2);
+            // ensure fixed positioning anchors to the viewport
+            document.body.appendChild(line);
+            line.classList.add('moving-line--fixed');
             line.style.position = 'fixed';
             line.style.left = cx + 'px';
             line.style.top = cy + 'px';
@@ -271,10 +291,12 @@ export function setupAnimatedViewControls() {
           const midX_vp = Math.round((sxAbs_vp + exAbs_vp) / 2), midY_vp = Math.round((syAbs_vp + eyAbs_vp) / 2);
           const length_vp = Math.max(2, Math.round(Math.hypot(exAbs_vp - sxAbs_vp, eyAbs_vp - syAbs_vp)));
 
-          // position fixed so the line spans viewport and can start at the very top (under header)
-          line.style.position = 'fixed';
-          line.style.left = midX_vp + 'px';
-          line.style.top = midY_vp + 'px';
+  // position fixed in the viewport so diagonal lines behave like vertical lines
+  if (line.parentNode !== document.body) document.body.appendChild(line);
+  line.classList.add('moving-line--fixed');
+  line.style.position = 'fixed';
+    line.style.left = midX_vp + 'px';
+    line.style.top = midY_vp + 'px';
           line.style.width = length_vp + 'px';
           line.style.height = lineThickness + 'px';
           line.style.background = `linear-gradient(90deg, transparent 0%, ${soft} 10%, ${strong} 50%, ${soft} 90%, transparent 100%)`;

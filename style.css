@@ -989,6 +989,14 @@ body.view-animated .right-view-title::before {
     pointer-events: none;
 }
 
+/* Defensive helper: when JS marks a line as fixed, enforce it in CSS so
+   it can't be accidentally overridden by ancestor styles. */
+.moving-line--fixed {
+  position: fixed !important;
+  pointer-events: none !important;
+  will-change: transform, left, top;
+}
+
 @keyframes line-move {
     0%   { transform: translateX(-100%); }
     100% { transform: translateX(100%); }

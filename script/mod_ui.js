@@ -101,8 +101,19 @@ export function setupUI() {
       rightViewTitle.textContent = '';
       rightTop.innerHTML = '';
 
-      if (type !== 'animated') {
-        ['position','left','top','width','height','margin','padding','overflow'].forEach(p => mainPanel.style[p] = '');
+      if (type === 'animated') {
+        h1.textContent = 'Animated';
+        mainPanel.innerHTML = '';
+        if (getComputedStyle(mainPanel).position === 'static') mainPanel.style.position = 'relative';
+        applyMainPanelBounds(mainPanel);
+        const existing = mainPanel.querySelector('.static-line'); if (existing) existing.remove();
+        const line = document.createElement('div'); line.className = 'static-line'; mainPanel.appendChild(line);
+        const mpW = mainPanel.clientWidth || mainPanel.getBoundingClientRect().width;
+        const inset = Math.min(120, Math.floor(mpW * 0.06));
+        line.style.left = inset + 'px';
+        line.style.width = Math.max(0, mpW - inset * 2) + 'px';
+        const mpStyle = getComputedStyle(mainPanel); const padTop = parseFloat(mpStyle.paddingTop) || 0; line.style.top = padTop + 'px';
+        mainPanel.style.overflow = 'hidden';
         mainPanel.classList.add('plain-view');
       }
 
@@ -126,9 +137,11 @@ export function setupUI() {
 
       // right panel content
       if (type === 'animated') {
-        h1.textContent = 'Animated'; mainPanel.innerHTML = ''; if (getComputedStyle(mainPanel).position === 'static') mainPanel.style.position = 'relative'; const old = mainPanel.querySelector('.moving-line'); if (old) old.remove(); const line = document.createElement('div'); line.className = 'moving-line'; mainPanel.appendChild(line); mainPanel.style.overflow = 'hidden';
-
-        // now delegate to module to setup animated controls
+        // delegate to module to setup animated controls. The module will create
+        // any needed moving-line elements and ensure they are attached to the
+        // correct container (document.body for fixed lines). Avoid creating a
+        // transient .moving-line here which could remain inside the scrolling
+        // main panel and produce a scrolling artifact.
         setupAnimatedViewControls();
       } else if (type === 'gradient') {
         rightViewTitle.textContent = 'Gradient'; rightTop.innerHTML = '';
