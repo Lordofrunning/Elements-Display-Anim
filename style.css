@@ -922,6 +922,11 @@ body.view-animated .right-view-title::before {
     100% { transform: translateX(100%); }
 }
 
+@keyframes line-move-vertical {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
 
 .floating-shape:nth-child(1) {
   top: 20%;
