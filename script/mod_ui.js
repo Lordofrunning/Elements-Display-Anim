@@ -1,6 +1,7 @@
 import { normalizeHex, hexToRgb, getContrastColor, applyMainPanelBounds } from './mod_helpers.js';
 import { setupButtons } from './mod_buttons.js';
 import { setupAnimatedViewControls } from './mod_animated.js';
+import { setupGradientViewControls } from './mod_gradient.js';
 
 // Expose UI wiring functions
 export function setupUI() {
@@ -102,22 +103,6 @@ export function setupUI() {
       rightTop.innerHTML = '';
 
       if (type === 'animated') {
-        h1.textContent = 'Animated';
-        mainPanel.innerHTML = '';
-        if (getComputedStyle(mainPanel).position === 'static') mainPanel.style.position = 'relative';
-        applyMainPanelBounds(mainPanel);
-        const existing = mainPanel.querySelector('.static-line'); if (existing) existing.remove();
-        const line = document.createElement('div'); line.className = 'static-line'; mainPanel.appendChild(line);
-        const mpW = mainPanel.clientWidth || mainPanel.getBoundingClientRect().width;
-        const inset = Math.min(120, Math.floor(mpW * 0.06));
-        line.style.left = inset + 'px';
-        line.style.width = Math.max(0, mpW - inset * 2) + 'px';
-        const mpStyle = getComputedStyle(mainPanel); const padTop = parseFloat(mpStyle.paddingTop) || 0; line.style.top = padTop + 'px';
-        mainPanel.style.overflow = 'hidden';
-        mainPanel.classList.add('plain-view');
-      }
-
-      if (type === 'animated') {
         mainPanel.classList.remove('plain-view');
         h1.textContent = 'Animated';
         mainPanel.innerHTML = '';
@@ -132,7 +117,15 @@ export function setupUI() {
         const mpStyle = getComputedStyle(mainPanel); const padTop = parseFloat(mpStyle.paddingTop) || 0; line.style.top = padTop + 'px';
         mainPanel.style.overflow = 'hidden';
       } else if (type === 'gradient') {
-        h1.textContent = 'Gradient'; mainPanel.innerHTML = '';
+        // prepare the main panel to behave like the center area (fill between
+        // the fixed left/right panels) similar to the animated view so the
+        // gradient element will fill the visible center area.
+        mainPanel.classList.remove('plain-view');
+        h1.textContent = 'Gradient';
+        mainPanel.innerHTML = '';
+        if (getComputedStyle(mainPanel).position === 'static') mainPanel.style.position = 'relative';
+        applyMainPanelBounds(mainPanel);
+        mainPanel.style.overflow = 'hidden';
       }
 
       // right panel content
@@ -143,6 +136,11 @@ export function setupUI() {
         // transient .moving-line here which could remain inside the scrolling
         // main panel and produce a scrolling artifact.
         setupAnimatedViewControls();
+      } else if (type === 'gradient') {
+        // delegate to gradient module which will create the center gradient
+        // and populate the right panel with controls. Left panel must
+        // remain unchanged.
+        setupGradientViewControls();
       } else if (type === 'gradient') {
         rightViewTitle.textContent = 'Gradient'; rightTop.innerHTML = '';
       } else {

@@ -927,10 +927,6 @@ body:not(.view-plain) .button-grid {
   display: none;
 }
 
-body.view-gradient .right-top {
-  display: none;
-}
-
 body:not(.view-plain) .right-bottom {
   display: none;
 }
@@ -958,6 +954,17 @@ body.view-animated .right-view-title::before {
   content: "Animated";
 }
 
+/* Make the main panel fill the center area for Gradient view similar to Animated */
+body.view-gradient .main-panel {
+  position: absolute;
+  left: 10%;
+  width: 80%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
 /* Animated view styles */
 .animated-bg {
   position: absolute;
@@ -966,6 +973,18 @@ body.view-animated .right-view-title::before {
   right: 0;
   bottom: 0;
   overflow: hidden;
+}
+
+/* Gradient center background used by the Gradient view */
+.gradient-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  background: linear-gradient(135deg, var(--gradient-start, #2b2bff) 0%, var(--gradient-end, #ff2b9b) 100%);
+  transition: background 240ms linear;
 }
 
 .floating-shape {
