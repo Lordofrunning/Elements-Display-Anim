@@ -16,9 +16,9 @@ export function setupAnimatedViewControls() {
   // (appended to document.body) and not scroll with page content.
   document.querySelectorAll('.moving-line').forEach(el => el.remove());
 
-  let currentDirection = 'horizontal';
+  let currentDirection = 'vertical';
   let currentPosition = 'top';
-  const DEFAULT_LINE_COUNT = 3;
+  const DEFAULT_LINE_COUNT = 5;
   let movingLines = mainPanel ? Array.from(mainPanel.querySelectorAll('.moving-line')) : [];
 
   function removeMovingLines() {
@@ -76,7 +76,8 @@ export function setupAnimatedViewControls() {
     if (!mainPanel) return;
     const bounds = getCenterBounds();
     const animPicker = document.getElementById('animated-color-picker');
-    const color = (animPicker && animPicker.value) ? animPicker.value : (document.getElementById('color-picker') ? document.getElementById('color-picker').value : getComputedStyle(root).getPropertyValue('--animated-bg').trim() || '#ffffff');
+    const btnBaseColor = getComputedStyle(root).getPropertyValue('--btn-base').trim();
+    const color = (animPicker && animPicker.value) ? animPicker.value : (getComputedStyle(root).getPropertyValue('--animated-bg').trim() || btnBaseColor || '#3498db');
     const mpRect = mainPanel.getBoundingClientRect();
     const lineThickness = 3;
     const mpStyle = getComputedStyle(mainPanel);
@@ -332,7 +333,7 @@ export function setupAnimatedViewControls() {
     rightTopEl.insertBefore(posRow, rightTopEl.querySelector('.panel-buttons'));
 
     const dirRow = document.createElement('div'); dirRow.className = 'direction-picker-row'; dirRow.style.marginTop = '6px';
-    dirRow.innerHTML = `<label>Direction <select id="direction-select"><option value="horizontal">Horizontal</option><option value="vertical">Vertical</option><option value="diagonal">Diagonal</option></select></label>`;
+    dirRow.innerHTML = `<label>Direction <select id="direction-select"><option value="horizontal">Horizontal</option><option value="vertical" selected>Vertical</option><option value="diagonal">Diagonal</option></select></label>`;
     rightTopEl.insertBefore(dirRow, posRow.nextSibling);
 
     const animColorRow = document.createElement('div'); animColorRow.className = 'color-picker-row';
@@ -342,7 +343,7 @@ export function setupAnimatedViewControls() {
     const countRow = document.createElement('div');
     countRow.className = 'count-picker-row';
     countRow.style.marginTop = '8px';
-    countRow.innerHTML = `<label>Lines <select id="lines-count"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option><option value="8">8</option></select></label>`;
+    countRow.innerHTML = `<label>Lines <select id="lines-count"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected>5</option><option value="8">8</option></select></label>`;
     if (btnArea) rightTopEl.insertBefore(countRow, btnArea); else rightTopEl.appendChild(countRow);
 
     const btnRow = document.createElement('div'); btnRow.className = 'panel-buttons animated-apply-row'; btnRow.style.marginTop = '8px';
@@ -351,8 +352,12 @@ export function setupAnimatedViewControls() {
 
     const acp = document.getElementById('animated-color-picker');
     if (acp) {
-      const v = getComputedStyle(root).getPropertyValue('--animated-bg').trim() || '#ffffff';
-      acp.value = (v.startsWith('#') ? v : '#ffffff');
+      // Try to get color from: 1) --animated-bg CSS var, 2) --btn-base (last button color), 3) default button blue
+      const cssVarColor = getComputedStyle(root).getPropertyValue('--animated-bg').trim();
+      const btnBaseColor = getComputedStyle(root).getPropertyValue('--btn-base').trim();
+      const defaultBlue = '#3498db'; // fallback if no CSS vars set
+      const v = cssVarColor || btnBaseColor || defaultBlue;
+      acp.value = (v.startsWith('#') ? v : defaultBlue);
       acp.addEventListener('input', () => updateLinePositions());
       const applyBtn = document.getElementById('animated-apply'); if (applyBtn) applyBtn.addEventListener('click', () => { root.style.setProperty('--animated-bg', acp.value); updateLinePositions(); });
       const resetBtn = document.getElementById('animated-reset'); if (resetBtn) resetBtn.addEventListener('click', () => { root.style.setProperty('--animated-bg', '#ffffff'); acp.value = '#ffffff'; updateLinePositions(); });
