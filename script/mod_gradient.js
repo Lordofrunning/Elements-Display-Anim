@@ -32,15 +32,13 @@ export function setupGradientViewControls() {
     <div class="amount-picker-row"><label>Angle <input id="grad-angle" type="range" min="0" max="360" value="${defAngle}" style="width: 100%;"/></label></div>
     <div class="panel-buttons"><button id="grad-reset" class="btn">Reset</button></div>
     <div style="margin-top:12px;"><strong>Presets</strong></div>
-    <div class="panel-buttons" style="margin-top:8px;">
+    <div class="preset-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
       <button data-preset="#ff7a18,#af002d" class="btn">Sunset</button>
-      <button data-preset="#00c6ff,#0072ff" class="btn">Ocean</button>
-      <button data-preset="#8e2de2,#4a00e0" class="btn">Violet</button>
-    </div>
-    <div class="panel-buttons" style="margin-top:8px;">
-      <button data-preset="#56ab2f,#a8e063" class="btn">Forest</button>
-      <button data-preset="#ee0979,#ff6a00" class="btn">Fire</button>
-      <button data-preset="#2193b0,#6dd5ed" class="btn">Sky</button>
+      <button data-preset="#00d4ff,#003d66" class="btn">Ocean</button>
+      <button data-preset="#a855f7,#2d0066" class="btn">Violet</button>
+      <button data-preset="#3d7a1f,#c8ff80" class="btn">Forest</button>
+      <button data-preset="#ff0055,#ff9500" class="btn">Fire</button>
+      <button data-preset="#0d5c7a,#8ef0ff" class="btn">Sky</button>
     </div>
   `;
   rightTop.appendChild(controls);

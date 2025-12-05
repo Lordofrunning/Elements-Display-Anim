@@ -394,6 +394,20 @@ body.view-animated .main-panel {
 .panel .panel-buttons .btn { flex:1; font-size:0.9rem; padding:8px 10px; background: rgba(255,255,255,0.2); color: white; box-shadow: 0 0 5px var(--btn-base); transition: transform 0.2s ease, box-shadow 0.2s ease; }
 .panel .panel-buttons .btn:hover { transform: translateY(-2px); box-shadow: 0 0 8px var(--btn-base); }
 
+/* preset grid buttons styling */
+.preset-grid .btn { 
+  font-size: 0.85rem; 
+  padding: 10px 8px; 
+  background: rgba(255,255,255,0.2); 
+  color: white; 
+  box-shadow: 0 0 5px var(--btn-base); 
+  transition: transform 0.2s ease, box-shadow 0.2s ease; 
+}
+.preset-grid .btn:hover { 
+  transform: translateY(-2px); 
+  box-shadow: 0 0 8px var(--btn-base); 
+}
+
 /* smaller typography inside panels to help fit content */
 .panel h2 { font-size:1rem; margin:0 0 8px 0; }
 .panel p, .panel small { font-size:0.8rem; margin:0; }
