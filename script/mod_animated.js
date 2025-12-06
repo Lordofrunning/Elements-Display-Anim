@@ -76,8 +76,8 @@ export function setupAnimatedViewControls() {
     if (!mainPanel) return;
     const bounds = getCenterBounds();
     const animPicker = document.getElementById('animated-color-picker');
-    const btnBaseColor = getComputedStyle(root).getPropertyValue('--btn-base').trim();
-    const color = (animPicker && animPicker.value) ? animPicker.value : (getComputedStyle(root).getPropertyValue('--animated-bg').trim() || btnBaseColor || '#3498db');
+    const btnBaseColor = getComputedStyle(root).getPropertyValue('--btn-base').trim() || '#3498db';
+    const color = (animPicker && animPicker.value) ? animPicker.value : btnBaseColor;
     const mpRect = mainPanel.getBoundingClientRect();
     const lineThickness = 3;
     const mpStyle = getComputedStyle(mainPanel);
@@ -352,15 +352,14 @@ export function setupAnimatedViewControls() {
 
     const acp = document.getElementById('animated-color-picker');
     if (acp) {
-      // Try to get color from: 1) --animated-bg CSS var, 2) --btn-base (last button color), 3) default button blue
-      const cssVarColor = getComputedStyle(root).getPropertyValue('--animated-bg').trim();
+      // Always get color from --btn-base (current button color)
       const btnBaseColor = getComputedStyle(root).getPropertyValue('--btn-base').trim();
-      const defaultBlue = '#3498db'; // fallback if no CSS vars set
-      const v = cssVarColor || btnBaseColor || defaultBlue;
+      const defaultBlue = '#3498db'; // fallback if no CSS var set
+      const v = btnBaseColor || defaultBlue;
       acp.value = (v.startsWith('#') ? v : defaultBlue);
       acp.addEventListener('input', () => updateLinePositions());
-      const applyBtn = document.getElementById('animated-apply'); if (applyBtn) applyBtn.addEventListener('click', () => { root.style.setProperty('--animated-bg', acp.value); updateLinePositions(); });
-      const resetBtn = document.getElementById('animated-reset'); if (resetBtn) resetBtn.addEventListener('click', () => { root.style.setProperty('--animated-bg', '#ffffff'); acp.value = '#ffffff'; updateLinePositions(); });
+      const applyBtn = document.getElementById('animated-apply'); if (applyBtn) applyBtn.addEventListener('click', () => { updateLinePositions(); });
+      const resetBtn = document.getElementById('animated-reset'); if (resetBtn) resetBtn.addEventListener('click', () => { const resetColor = getComputedStyle(root).getPropertyValue('--btn-base').trim() || '#3498db'; acp.value = resetColor; updateLinePositions(); });
       const linesSelect = document.getElementById('lines-count'); if (linesSelect) linesSelect.addEventListener('change', (e) => { const n = parseInt(e.target.value, 10) || DEFAULT_LINE_COUNT; createMovingLines(n); updateLinePositions(); });
     }
   }

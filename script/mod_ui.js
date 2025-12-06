@@ -230,10 +230,6 @@ export function setupUI() {
                   root.style.setProperty(variable + '-text', contrast);
                 }
               });
-              // Also update animated line color to match button color
-              if (target.startsWith('btn')) {
-                root.style.setProperty('--animated-bg', color);
-              }
             });
 
             resetBtn.addEventListener('click', () => { Object.entries(defaults).forEach(([k,v]) => root.style.setProperty(k, v)); updatePicker(); });
