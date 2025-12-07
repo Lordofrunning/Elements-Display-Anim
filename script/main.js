@@ -29,8 +29,14 @@ function startAutoLoops() {
       if (cfg.selector === '.btn-6') { el.classList.add('shimmer-go'); setTimeout(() => el.classList.remove('shimmer-go'), 600); return; }
       if (cfg.selector === '.btn-11') { el.classList.add('shimmer-go'); setTimeout(() => el.classList.remove('shimmer-go'), 500); return; }
       if (cfg.selector === '.btn-7') { el.classList.add('auto'); return; }
+      // 3D push button: add pressed class for 1 second
+      if (cfg.selector === '.btn-10') {
+        el.classList.add('pressed-3d');
+        setTimeout(() => el.classList.remove('pressed-3d'), 1000);
+        return;
+      }
       // Click-based effects: trigger click
-      if (['.btn-8', '.btn-9', '.btn-10', '.btn-12'].includes(cfg.selector)) {
+      if (['.btn-8', '.btn-9', '.btn-12'].includes(cfg.selector)) {
         el.click();
         // For btn-9, toggle back after a delay
         if (cfg.selector === '.btn-9') {

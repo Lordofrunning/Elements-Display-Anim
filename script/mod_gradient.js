@@ -1,5 +1,3 @@
-import { hexToRgb } from './mod_helpers.js';
-
 export function setupGradientViewControls() {
   const root = document.documentElement;
   const mainPanel = document.querySelector('.main-panel');

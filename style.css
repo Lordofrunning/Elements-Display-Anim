@@ -649,7 +649,7 @@ body.view-animated .main-panel {
   z-index: -1;
 }
 
-.btn-10:active {
+.btn-10:active, .btn-10.pressed-3d {
   border-top: 1px solid rgba(255,255,255,0.4);
   border-left: 1px solid rgba(255,255,255,0.4);
   border-right: 4px solid rgba(0,0,0,0.4);
@@ -657,7 +657,7 @@ body.view-animated .main-panel {
   transform: translateY(2px);
 }
 
-.btn-10:active::after {
+.btn-10:active::after, .btn-10.pressed-3d::after {
   bottom: -8px;
   left: 6px;
   right: 6px;
