@@ -100,7 +100,7 @@ h1 {
 
 /* Right panel split into equal top/bottom halves with divider at midpoint */
 .right-panel { display:flex; flex-direction:column; }
-.right-panel .right-top { flex:1; overflow:hidden; padding: 16px 16px 8px 16px; }
+.right-panel .right-top { flex:0 0 auto; overflow:hidden; padding: 16px 16px 8px 16px; }
 .right-panel .right-bottom { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding: 8px 16px 16px 16px; }
 
 .right-divider {
