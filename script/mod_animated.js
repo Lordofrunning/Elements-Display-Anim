@@ -20,6 +20,7 @@ export function setupAnimatedViewControls() {
   let currentPosition = 'top';
   const DEFAULT_LINE_COUNT = 5;
   let movingLines = mainPanel ? Array.from(mainPanel.querySelectorAll('.moving-line')) : [];
+  let lineColors = []; // Store colors for each line in mixed mode
 
   function removeMovingLines() {
     movingLines.forEach(l => {
@@ -29,23 +30,41 @@ export function setupAnimatedViewControls() {
       l.remove();
     });
     movingLines = [];
+    lineColors = [];
   }
 
-  function createMovingLines(n) {
-    removeMovingLines();
-    for (let i = 0; i < n; i++) {
-      const el = document.createElement('div');
-      el.className = 'moving-line';
-      el.dataset.index = i;
-      el.style.pointerEvents = 'none';
-      el.style.zIndex = '1';
-      // create moving lines as top-level viewport elements by default so
-      // vertical/diagonal variants can be forced fixed without being trapped
-      // inside a transformed/scrolling ancestor. Horizontal branch will
-      // reparent into `mainPanel` when needed.
-      if (getComputedStyle(mainPanel).position === 'static') mainPanel.style.position = 'relative';
-      document.body.appendChild(el);
-      movingLines.push(el);
+  function createMovingLines(n, color = null) {
+    const mixedToggle = document.getElementById('mixed-colors-toggle');
+    const isMixedMode = mixedToggle && mixedToggle.checked;
+    
+    if (!isMixedMode) {
+      // Normal mode: replace all lines
+      removeMovingLines();
+      for (let i = 0; i < n; i++) {
+        const el = document.createElement('div');
+        el.className = 'moving-line';
+        el.dataset.index = i;
+        el.style.pointerEvents = 'none';
+        el.style.zIndex = '1';
+        if (getComputedStyle(mainPanel).position === 'static') mainPanel.style.position = 'relative';
+        document.body.appendChild(el);
+        movingLines.push(el);
+        lineColors.push(color);
+      }
+    } else {
+      // Mixed mode: add new lines with the new color
+      const startIndex = movingLines.length;
+      for (let i = 0; i < n; i++) {
+        const el = document.createElement('div');
+        el.className = 'moving-line';
+        el.dataset.index = startIndex + i;
+        el.style.pointerEvents = 'none';
+        el.style.zIndex = '1';
+        if (getComputedStyle(mainPanel).position === 'static') mainPanel.style.position = 'relative';
+        document.body.appendChild(el);
+        movingLines.push(el);
+        lineColors.push(color);
+      }
     }
   }
 
@@ -77,12 +96,25 @@ export function setupAnimatedViewControls() {
     debugOverlayEl.innerHTML = `lines: ${count}<br>mp: ${Math.round(mpRect.width)}x${Math.round(mpRect.height)}<br>bounds L:${bounds.left} R:${bounds.right}`;
   }
 
+  function getLineColor(index) {
+    // In mixed mode, use stored color for each line
+    // Otherwise use the current picker color
+    const animPicker = document.getElementById('animated-color-picker');
+    const btnBaseColor = getComputedStyle(root).getPropertyValue('--btn-base').trim() || '#3498db';
+    const currentColor = (animPicker && animPicker.value) ? animPicker.value : btnBaseColor;
+    
+    const mixedToggle = document.getElementById('mixed-colors-toggle');
+    const isMixedMode = mixedToggle && mixedToggle.checked;
+    
+    if (isMixedMode && lineColors[index]) {
+      return lineColors[index];
+    }
+    return currentColor;
+  }
+
   function updateLinePositions() {
     if (!mainPanel) return;
     const bounds = getCenterBounds();
-    const animPicker = document.getElementById('animated-color-picker');
-    const btnBaseColor = getComputedStyle(root).getPropertyValue('--btn-base').trim() || '#3498db';
-    const color = (animPicker && animPicker.value) ? animPicker.value : btnBaseColor;
     const mpRect = mainPanel.getBoundingClientRect();
     const lineThickness = 3;
     const mpStyle = getComputedStyle(mainPanel);
@@ -93,9 +125,6 @@ export function setupAnimatedViewControls() {
     const mpHeight = mainPanel.clientHeight || mpRect.height;
     const mpWidth = mainPanel.clientWidth || mpRect.width;
     const inset = Math.min(120, Math.floor(mpWidth * 0.06));
-    const rgb = hexToRgb(color);
-    const soft = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`;
-    const strong = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
 
     // Horizontal
     if (currentDirection === 'horizontal') {
@@ -103,6 +132,11 @@ export function setupAnimatedViewControls() {
       const count = movingLines.length;
       let spacing = 0; if (count > 1) spacing = available / (count - 1);
       movingLines.forEach((line, i) => {
+        const color = getLineColor(i);
+        const rgb = hexToRgb(color);
+        const soft = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`;
+        const strong = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
+
         let y = 0;
         if (count === 1) {
           if (currentPosition === 'top') y = padTop;
@@ -141,6 +175,11 @@ export function setupAnimatedViewControls() {
       const count = movingLines.length;
       let spacingX = 0; if (count > 1) spacingX = availableX / (count - 1);
       movingLines.forEach((line, i) => {
+        const color = getLineColor(i);
+        const rgb = hexToRgb(color);
+        const soft = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`;
+        const strong = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
+
         let x = 0;
         if (count === 1) {
           if (currentPosition === 'top') x = padLeft + inset;
@@ -258,6 +297,11 @@ export function setupAnimatedViewControls() {
       }
 
         movingLines.forEach((line, idx) => {
+          const color = getLineColor(idx);
+          const rgb = hexToRgb(color);
+          const soft = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`;
+          const strong = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
+          
           const s = starts[idx] || starts[0];
           const sx = s.sx, sy = s.sy;
 
@@ -322,6 +366,11 @@ export function setupAnimatedViewControls() {
       let spacingX = 0; if (count > 1) spacingX = availableX / (count - 1);
       
       movingLines.forEach((line, i) => {
+        const color = getLineColor(i);
+        const rgb = hexToRgb(color);
+        const soft = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`;
+        const strong = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
+        
         let x = 0;
         if (count === 1) {
           x = Math.max(padLeft + inset, Math.round(mpWidth / 2 - lineWidth / 2));
@@ -338,14 +387,14 @@ export function setupAnimatedViewControls() {
         const segmentHeight = 80; // height of each vertical segment
         const angleOffset = 50; // horizontal offset for angled segments (increased for more sideways movement)
         const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-        const segments = Math.ceil(viewportHeight / segmentHeight);
+        const totalSegments = Math.ceil(viewportHeight / segmentHeight) + 2; // add extra segments to ensure full coverage
         
         // Build SVG path for the zigzag pattern
         let pathData = `M ${angleOffset} 0 `; // start at top, centered in SVG
         let currentY = 0;
         let currentX = angleOffset;
         
-        for (let seg = 0; seg < segments; seg++) {
+        for (let seg = 0; seg < totalSegments; seg++) {
           // Vertical segment
           currentY += segmentHeight * 0.3;
           pathData += `L ${currentX} ${currentY} `;
@@ -361,9 +410,6 @@ export function setupAnimatedViewControls() {
           pathData += `L ${currentX} ${currentY} `;
         }
         
-        // Ensure line extends to bottom
-        pathData += `L ${currentX} ${viewportHeight}`;
-        
         // Create SVG element for the zigzag path
         const svgNS = 'http://www.w3.org/2000/svg';
         const svg = document.createElementNS(svgNS, 'svg');
@@ -371,7 +417,7 @@ export function setupAnimatedViewControls() {
         svg.style.left = (absoluteLeft - angleOffset) + 'px';
         svg.style.top = '0px';
         svg.style.width = (angleOffset * 2 + lineWidth) + 'px';
-        svg.style.height = viewportHeight + 'px';
+        svg.style.height = (viewportHeight + segmentHeight * 2) + 'px'; // extend SVG canvas
         svg.style.pointerEvents = 'none';
         svg.style.zIndex = '0';
         svg.style.overflow = 'visible';
@@ -384,25 +430,23 @@ export function setupAnimatedViewControls() {
         path.setAttribute('stroke-linecap', 'round');
         path.setAttribute('stroke-linejoin', 'round');
         
-        // Add flowing effect with stroke-dasharray animation
-        const pathLength = path.getTotalLength ? path.getTotalLength() : viewportHeight * 1.5;
-        const dashLength = pathLength * 0.15; // length of visible dash
-        path.style.strokeDasharray = `${dashLength} ${pathLength}`;
-        path.style.strokeDashoffset = `${pathLength}`;
-        path.style.animation = `zigzag-flow 4s linear ${i * 0.2}s infinite`;
-        
+        // Wait for path to be in DOM to get accurate length
         svg.appendChild(path);
+        document.body.appendChild(svg);
         
-        // Replace line div with SVG
+        // Get actual path length after it's rendered
+        setTimeout(() => {
+          const pathLength = path.getTotalLength();
+          const dashLength = pathLength * 0.15; // length of visible dash
+          path.style.strokeDasharray = `${dashLength} ${pathLength}`;
+          path.style.strokeDashoffset = `${pathLength}`;
+          path.style.animation = `zigzag-flow 4s linear infinite`;
+          path.style.animationDelay = `${i * 0.2}s`;
+        }, 0);
+        
+        // Track SVG element for cleanup
         if (line.parentNode) line.parentNode.removeChild(line);
-        if (!line.svgElement) {
-          document.body.appendChild(svg);
-          line.svgElement = svg;
-        } else {
-          if (line.svgElement.parentNode) line.svgElement.parentNode.removeChild(line.svgElement);
-          document.body.appendChild(svg);
-          line.svgElement = svg;
-        }
+        line.svgElement = svg;
       });
 
     // fallback
@@ -442,6 +486,12 @@ export function setupAnimatedViewControls() {
     countRow.innerHTML = `<label>Lines <select id="lines-count"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected>5</option><option value="8">8</option></select></label>`;
     if (btnArea) rightTopEl.insertBefore(countRow, btnArea); else rightTopEl.appendChild(countRow);
 
+    const mixedColorsRow = document.createElement('div');
+    mixedColorsRow.className = 'mixed-colors-row';
+    mixedColorsRow.style.marginTop = '8px';
+    mixedColorsRow.innerHTML = `<label><input type="checkbox" id="mixed-colors-toggle" /> Mixed Colors</label>`;
+    if (btnArea) rightTopEl.insertBefore(mixedColorsRow, btnArea); else rightTopEl.appendChild(mixedColorsRow);
+
     const btnRow = document.createElement('div'); btnRow.className = 'panel-buttons animated-apply-row'; btnRow.style.marginTop = '8px';
     btnRow.innerHTML = `<button id="animated-apply" class="btn">Apply</button><button id="animated-reset" class="btn">Reset</button>`;
     if (btnArea) rightTopEl.insertBefore(btnRow, btnArea); else rightTopEl.appendChild(btnRow);
@@ -453,10 +503,60 @@ export function setupAnimatedViewControls() {
       const defaultBlue = '#3498db'; // fallback if no CSS var set
       const v = btnBaseColor || defaultBlue;
       acp.value = (v.startsWith('#') ? v : defaultBlue);
-      acp.addEventListener('input', () => updateLinePositions());
-      const applyBtn = document.getElementById('animated-apply'); if (applyBtn) applyBtn.addEventListener('click', () => { updateLinePositions(); });
-      const resetBtn = document.getElementById('animated-reset'); if (resetBtn) resetBtn.addEventListener('click', () => { const resetColor = getComputedStyle(root).getPropertyValue('--btn-base').trim() || '#3498db'; acp.value = resetColor; updateLinePositions(); });
-      const linesSelect = document.getElementById('lines-count'); if (linesSelect) linesSelect.addEventListener('change', (e) => { const n = parseInt(e.target.value, 10) || DEFAULT_LINE_COUNT; createMovingLines(n); updateLinePositions(); });
+      
+      // Color picker handler
+      acp.addEventListener('input', () => {
+        const mixedToggle = document.getElementById('mixed-colors-toggle');
+        const isMixedMode = mixedToggle && mixedToggle.checked;
+        
+        if (isMixedMode) {
+          // In mixed mode, add new lines with the new color
+          const linesSelect = document.getElementById('lines-count');
+          const n = linesSelect ? parseInt(linesSelect.value, 10) : DEFAULT_LINE_COUNT;
+          createMovingLines(n, acp.value);
+          updateLinePositions();
+        } else {
+          // In normal mode, just update colors
+          updateLinePositions();
+        }
+      });
+      
+      const applyBtn = document.getElementById('animated-apply'); 
+      if (applyBtn) {
+        applyBtn.addEventListener('click', () => { 
+          const mixedToggle = document.getElementById('mixed-colors-toggle');
+          const isMixedMode = mixedToggle && mixedToggle.checked;
+          
+          if (isMixedMode) {
+            const linesSelect = document.getElementById('lines-count');
+            const n = linesSelect ? parseInt(linesSelect.value, 10) : DEFAULT_LINE_COUNT;
+            createMovingLines(n, acp.value);
+          }
+          updateLinePositions();
+        });
+      }
+      
+      const resetBtn = document.getElementById('animated-reset'); 
+      if (resetBtn) {
+        resetBtn.addEventListener('click', () => { 
+          const resetColor = getComputedStyle(root).getPropertyValue('--btn-base').trim() || '#3498db'; 
+          acp.value = resetColor;
+          // Reset clears all lines and recreates with default count
+          const linesSelect = document.getElementById('lines-count');
+          const n = linesSelect ? parseInt(linesSelect.value, 10) : DEFAULT_LINE_COUNT;
+          createMovingLines(n, resetColor);
+          updateLinePositions();
+        });
+      }
+      
+      const linesSelect = document.getElementById('lines-count'); 
+      if (linesSelect) {
+        linesSelect.addEventListener('change', (e) => { 
+          const n = parseInt(e.target.value, 10) || DEFAULT_LINE_COUNT;
+          createMovingLines(n, acp.value);
+          updateLinePositions();
+        });
+      }
     }
   }
 
