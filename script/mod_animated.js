@@ -22,7 +22,12 @@ export function setupAnimatedViewControls() {
   let movingLines = mainPanel ? Array.from(mainPanel.querySelectorAll('.moving-line')) : [];
 
   function removeMovingLines() {
-    movingLines.forEach(l => l.remove());
+    movingLines.forEach(l => {
+      if (l.svgElement && l.svgElement.parentNode) {
+        l.svgElement.parentNode.removeChild(l.svgElement);
+      }
+      l.remove();
+    });
     movingLines = [];
   }
 
@@ -309,6 +314,97 @@ export function setupAnimatedViewControls() {
           line.style.zIndex = '0';
         });
 
+    // Zigzag (half-hex pattern - vertical with alternating angles)
+    } else if (currentDirection === 'zigzag') {
+      const lineWidth = 3;
+      const availableX = Math.max(0, mpWidth - padLeft - padRight - lineWidth - inset * 2);
+      const count = movingLines.length;
+      let spacingX = 0; if (count > 1) spacingX = availableX / (count - 1);
+      
+      movingLines.forEach((line, i) => {
+        let x = 0;
+        if (count === 1) {
+          x = Math.max(padLeft + inset, Math.round(mpWidth / 2 - lineWidth / 2));
+        } else {
+          const groupWidth = spacingX * (count - 1);
+          const startX = Math.round(mpWidth / 2 - groupWidth / 2 - lineWidth / 2);
+          x = Math.max(padLeft + inset, startX + Math.round(spacingX * i));
+        }
+        
+        const absoluteLeft = Math.round(mpRect.left) + x;
+        
+        // Create zigzag path using clip-path
+        // Pattern: vertical segment, angle right, vertical, angle left, repeat
+        const segmentHeight = 80; // height of each vertical segment
+        const angleOffset = 50; // horizontal offset for angled segments (increased for more sideways movement)
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+        const segments = Math.ceil(viewportHeight / segmentHeight);
+        
+        // Build SVG path for the zigzag pattern
+        let pathData = `M ${angleOffset} 0 `; // start at top, centered in SVG
+        let currentY = 0;
+        let currentX = angleOffset;
+        
+        for (let seg = 0; seg < segments; seg++) {
+          // Vertical segment
+          currentY += segmentHeight * 0.3;
+          pathData += `L ${currentX} ${currentY} `;
+          
+          // Angle segment (alternate left/right)
+          const direction = (seg % 2 === 0) ? 1 : -1;
+          currentX += angleOffset * direction;
+          currentY += segmentHeight * 0.4;
+          pathData += `L ${currentX} ${currentY} `;
+          
+          // Back to vertical
+          currentY += segmentHeight * 0.3;
+          pathData += `L ${currentX} ${currentY} `;
+        }
+        
+        // Ensure line extends to bottom
+        pathData += `L ${currentX} ${viewportHeight}`;
+        
+        // Create SVG element for the zigzag path
+        const svgNS = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(svgNS, 'svg');
+        svg.style.position = 'fixed';
+        svg.style.left = (absoluteLeft - angleOffset) + 'px';
+        svg.style.top = '0px';
+        svg.style.width = (angleOffset * 2 + lineWidth) + 'px';
+        svg.style.height = viewportHeight + 'px';
+        svg.style.pointerEvents = 'none';
+        svg.style.zIndex = '0';
+        svg.style.overflow = 'visible';
+        
+        const path = document.createElementNS(svgNS, 'path');
+        path.setAttribute('d', pathData);
+        path.setAttribute('stroke', strong);
+        path.setAttribute('stroke-width', lineWidth);
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('stroke-linejoin', 'round');
+        
+        // Add flowing effect with stroke-dasharray animation
+        const pathLength = path.getTotalLength ? path.getTotalLength() : viewportHeight * 1.5;
+        const dashLength = pathLength * 0.15; // length of visible dash
+        path.style.strokeDasharray = `${dashLength} ${pathLength}`;
+        path.style.strokeDashoffset = `${pathLength}`;
+        path.style.animation = `zigzag-flow 4s linear ${i * 0.2}s infinite`;
+        
+        svg.appendChild(path);
+        
+        // Replace line div with SVG
+        if (line.parentNode) line.parentNode.removeChild(line);
+        if (!line.svgElement) {
+          document.body.appendChild(svg);
+          line.svgElement = svg;
+        } else {
+          if (line.svgElement.parentNode) line.svgElement.parentNode.removeChild(line.svgElement);
+          document.body.appendChild(svg);
+          line.svgElement = svg;
+        }
+      });
+
     // fallback
     } else {
       const lineWidth = 3;
@@ -333,7 +429,7 @@ export function setupAnimatedViewControls() {
     rightTopEl.insertBefore(posRow, rightTopEl.querySelector('.panel-buttons'));
 
     const dirRow = document.createElement('div'); dirRow.className = 'direction-picker-row'; dirRow.style.marginTop = '6px';
-    dirRow.innerHTML = `<label>Direction <select id="direction-select"><option value="horizontal">Horizontal</option><option value="vertical" selected>Vertical</option><option value="diagonal">Diagonal</option></select></label>`;
+    dirRow.innerHTML = `<label>Direction <select id="direction-select"><option value="horizontal">Horizontal</option><option value="vertical" selected>Vertical</option><option value="diagonal">Diagonal</option><option value="zigzag">Zigzag</option></select></label>`;
     rightTopEl.insertBefore(dirRow, posRow.nextSibling);
 
     const animColorRow = document.createElement('div'); animColorRow.className = 'color-picker-row';

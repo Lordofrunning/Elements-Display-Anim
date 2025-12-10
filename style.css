@@ -1039,6 +1039,13 @@ body.view-gradient .main-panel {
   100% { transform: translateY(100%); }
 }
 
+@keyframes zigzag-flow {
+  0%   { stroke-dashoffset: 100%; opacity: 0; }
+  10%  { opacity: 0.8; }
+  90%  { opacity: 0.8; }
+  100% { stroke-dashoffset: -100%; opacity: 0; }
+}
+
 
 .floating-shape:nth-child(1) {
   top: 20%;
