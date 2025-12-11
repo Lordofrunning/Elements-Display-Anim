@@ -123,6 +123,11 @@ export function setupAnimatedViewControls() {
       const count = movingLines.length;
       let spacing = 0; if (count > 1) spacing = available / (count - 1);
       movingLines.forEach((line, i) => {
+        // If coming from zigzag, remove any leftover SVG for this line
+        if (line.svgElement && line.svgElement.parentNode) {
+          line.svgElement.parentNode.removeChild(line.svgElement);
+          line.svgElement = null;
+        }
         const color = getLineColor(i);
         const rgb = hexToRgb(color);
         const soft = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`;
@@ -166,6 +171,11 @@ export function setupAnimatedViewControls() {
       const count = movingLines.length;
       let spacingX = 0; if (count > 1) spacingX = availableX / (count - 1);
       movingLines.forEach((line, i) => {
+        // If coming from zigzag, remove any leftover SVG for this line
+        if (line.svgElement && line.svgElement.parentNode) {
+          line.svgElement.parentNode.removeChild(line.svgElement);
+          line.svgElement = null;
+        }
         const color = getLineColor(i);
         const rgb = hexToRgb(color);
         const soft = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`;
@@ -288,6 +298,11 @@ export function setupAnimatedViewControls() {
       }
 
         movingLines.forEach((line, idx) => {
+          // If coming from zigzag, remove any leftover SVG for this line
+          if (line.svgElement && line.svgElement.parentNode) {
+            line.svgElement.parentNode.removeChild(line.svgElement);
+            line.svgElement = null;
+          }
           const color = getLineColor(idx);
           const rgb = hexToRgb(color);
           const soft = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`;
@@ -360,7 +375,11 @@ export function setupAnimatedViewControls() {
         const color = getLineColor(i);
         const rgb = hexToRgb(color);
         const strong = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
-        
+
+        // If a previous zigzag SVG exists for this line, clear it for reuse
+        const svgNS = 'http://www.w3.org/2000/svg';
+        let svg = line.svgElement;
+
         let x = 0;
         if (count === 1) {
           x = Math.max(padLeft + inset, Math.round(mpWidth / 2 - lineWidth / 2));
@@ -372,7 +391,7 @@ export function setupAnimatedViewControls() {
         
         const absoluteLeft = Math.round(mpRect.left) + x;
         
-        // Create zigzag path using clip-path
+  // Create zigzag path using a reusable SVG per line
         // Pattern: vertical segment, angle right, vertical, angle left, repeat
         const segmentHeight = 80; // height of each vertical segment
         const angleOffset = 50; // horizontal offset for angled segments (increased for more sideways movement)
@@ -400,9 +419,15 @@ export function setupAnimatedViewControls() {
           pathData += `L ${currentX} ${currentY} `;
         }
         
-        // Create SVG element for the zigzag path
-        const svgNS = 'http://www.w3.org/2000/svg';
-        const svg = document.createElementNS(svgNS, 'svg');
+        // Ensure we have a single SVG per line; reuse if it already exists
+        if (!svg) {
+          svg = document.createElementNS(svgNS, 'svg');
+          document.body.appendChild(svg);
+          line.svgElement = svg;
+        }
+
+        // Reset SVG content and sizing/positioning
+        while (svg.firstChild) svg.removeChild(svg.firstChild);
         svg.style.position = 'fixed';
         svg.style.left = (absoluteLeft - angleOffset) + 'px';
         svg.style.top = '0px';
@@ -411,7 +436,7 @@ export function setupAnimatedViewControls() {
         svg.style.pointerEvents = 'none';
         svg.style.zIndex = '0';
         svg.style.overflow = 'visible';
-        
+
         const path = document.createElementNS(svgNS, 'path');
         path.setAttribute('d', pathData);
         path.setAttribute('stroke', strong);
@@ -420,9 +445,8 @@ export function setupAnimatedViewControls() {
         path.setAttribute('stroke-linecap', 'round');
         path.setAttribute('stroke-linejoin', 'round');
         
-        // Wait for path to be in DOM to get accurate length
+        // Append path to (possibly reused) SVG
         svg.appendChild(path);
-        document.body.appendChild(svg);
         
         // Get actual path length after it's rendered
         setTimeout(() => {
@@ -434,9 +458,8 @@ export function setupAnimatedViewControls() {
           path.style.animationDelay = `${i * 0.2}s`;
         }, 0);
         
-        // Track SVG element for cleanup
+        // Ensure the placeholder div isn't on-screen; it's just our handle
         if (line.parentNode) line.parentNode.removeChild(line);
-        line.svgElement = svg;
       });
 
     // fallback
