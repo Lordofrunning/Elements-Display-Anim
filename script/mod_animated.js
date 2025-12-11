@@ -20,7 +20,7 @@ export function setupAnimatedViewControls() {
   let currentPosition = 'top';
   const DEFAULT_LINE_COUNT = 5;
   let movingLines = mainPanel ? Array.from(mainPanel.querySelectorAll('.moving-line')) : [];
-  let lineColors = []; // Store multiple colors for each line in mixed mode
+  let lineColors = []; // Store color for each line
 
   function removeMovingLines() {
     movingLines.forEach(l => {
@@ -44,9 +44,37 @@ export function setupAnimatedViewControls() {
       if (getComputedStyle(mainPanel).position === 'static') mainPanel.style.position = 'relative';
       document.body.appendChild(el);
       movingLines.push(el);
-      // Initialize each line with an array of colors
-      lineColors.push(color ? [color] : []);
+      lineColors.push(color);
     }
+  }
+  
+  function addLineWithColor(color) {
+    // Add a new line with the specified color (max 4 lines in mixed mode)
+    const mixedToggle = document.getElementById('mixed-colors-toggle');
+    const isMixedMode = mixedToggle && mixedToggle.checked;
+    
+    if (!isMixedMode) return;
+    
+    // Remove oldest line if we're at max capacity
+    if (movingLines.length >= 4) {
+      const oldestLine = movingLines.shift();
+      lineColors.shift();
+      if (oldestLine.svgElement && oldestLine.svgElement.parentNode) {
+        oldestLine.svgElement.parentNode.removeChild(oldestLine.svgElement);
+      }
+      oldestLine.remove();
+    }
+    
+    // Create new line
+    const el = document.createElement('div');
+    el.className = 'moving-line';
+    el.dataset.index = movingLines.length;
+    el.style.pointerEvents = 'none';
+    el.style.zIndex = '1';
+    if (getComputedStyle(mainPanel).position === 'static') mainPanel.style.position = 'relative';
+    document.body.appendChild(el);
+    movingLines.push(el);
+    lineColors.push(color);
   }
 
   if (!movingLines || movingLines.length < DEFAULT_LINE_COUNT) createMovingLines(DEFAULT_LINE_COUNT);
@@ -60,26 +88,8 @@ export function setupAnimatedViewControls() {
     return { left: Math.max(0, Math.round(lp.right)), right: Math.max(0, Math.round(rp.left)) };
   }
 
-  let debugOverlayEl = null;
-  function attachDebugOverlay() {
-    if (!mainPanel) return;
-    mainPanel.classList.add('debug-border');
-    if (!debugOverlayEl) {
-      debugOverlayEl = document.createElement('div');
-      debugOverlayEl.className = 'debug-overlay';
-      debugOverlayEl.textContent = 'animated debug';
-      mainPanel.appendChild(debugOverlayEl);
-    }
-  }
-
-  function updateDebugOverlay(bounds, mpRect, count) {
-    if (!debugOverlayEl) return;
-    debugOverlayEl.innerHTML = `lines: ${count}<br>mp: ${Math.round(mpRect.width)}x${Math.round(mpRect.height)}<br>bounds L:${bounds.left} R:${bounds.right}`;
-  }
-
   function getLineColor(index) {
-    // In mixed mode, return array of colors for gradient
-    // Otherwise return the current picker color
+    // Return stored color for each line, or current picker color
     const animPicker = document.getElementById('animated-color-picker');
     const btnBaseColor = getComputedStyle(root).getPropertyValue('--btn-base').trim() || '#3498db';
     const currentColor = (animPicker && animPicker.value) ? animPicker.value : btnBaseColor;
@@ -87,79 +97,10 @@ export function setupAnimatedViewControls() {
     const mixedToggle = document.getElementById('mixed-colors-toggle');
     const isMixedMode = mixedToggle && mixedToggle.checked;
     
-    if (isMixedMode && lineColors[index] && lineColors[index].length > 0) {
-      return lineColors[index]; // Return array of colors
+    if (isMixedMode && lineColors[index]) {
+      return lineColors[index];
     }
-    return currentColor; // Return single color
-  }
-  
-  function addColorToLine(index, color) {
-    // Add a new color to the line's color array (max 4 colors, FIFO)
-    if (!lineColors[index]) {
-      lineColors[index] = [];
-    }
-    // Only add if it's different from the last color
-    const lastColor = lineColors[index][lineColors[index].length - 1];
-    if (lastColor !== color) {
-      lineColors[index].push(color);
-      // Keep only the last 4 colors (FIFO)
-      if (lineColors[index].length > 4) {
-        lineColors[index].shift(); // Remove the oldest color
-      }
-    }
-  }
-  
-  function createGradientFromColors(colors, direction = '90deg') {
-    // Create a gradient background from array of colors
-    if (!Array.isArray(colors) || colors.length === 0) {
-      return null;
-    }
-    if (colors.length === 1) {
-      const rgb = hexToRgb(colors[0]);
-      return {
-        soft: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`,
-        strong: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`,
-        gradient: `linear-gradient(${direction}, transparent 0%, rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12) 10%, rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95) 50%, rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12) 90%, transparent 100%)`
-      };
-    }
-    
-    // Multiple colors: create smooth blended gradient without dark patches
-    const stops = [];
-    const segmentSize = 100 / colors.length;
-    
-    // Start with transparent
-    stops.push(`transparent 0%`);
-    
-    colors.forEach((color, i) => {
-      const rgb = hexToRgb(color);
-      const start = i * segmentSize;
-      const mid = start + segmentSize / 2;
-      const end = (i + 1) * segmentSize;
-      
-      // Fade in from transparent (or previous color)
-      if (i === 0) {
-        stops.push(`rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12) ${start + segmentSize * 0.1}%`);
-      } else {
-        stops.push(`rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5) ${start}%`);
-      }
-      
-      // Peak opacity at midpoint
-      stops.push(`rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95) ${mid}%`);
-      
-      // Fade out to next color (or transparent)
-      if (i === colors.length - 1) {
-        stops.push(`rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12) ${end - segmentSize * 0.1}%`);
-        stops.push(`transparent 100%`);
-      } else {
-        stops.push(`rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5) ${end}%`);
-      }
-    });
-    
-    return {
-      soft: `rgba(128, 128, 128, 0.12)`, // Fallback
-      strong: `rgba(128, 128, 128, 0.95)`, // Fallback
-      gradient: `linear-gradient(${direction}, ${stops.join(', ')})`
-    };
+    return currentColor;
   }
 
   function updateLinePositions() {
@@ -182,20 +123,10 @@ export function setupAnimatedViewControls() {
       const count = movingLines.length;
       let spacing = 0; if (count > 1) spacing = available / (count - 1);
       movingLines.forEach((line, i) => {
-        const colorData = getLineColor(i);
-        let soft, strong, gradient;
-        
-        if (Array.isArray(colorData)) {
-          const grad = createGradientFromColors(colorData, '90deg');
-          gradient = grad.gradient;
-          soft = grad.soft;
-          strong = grad.strong;
-        } else {
-          const rgb = hexToRgb(colorData);
-          soft = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`;
-          strong = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
-          gradient = `linear-gradient(90deg, transparent 0%, ${soft} 10%, ${strong} 50%, ${soft} 90%, transparent 100%)`;
-        }
+        const color = getLineColor(i);
+        const rgb = hexToRgb(color);
+        const soft = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`;
+        const strong = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
 
         let y = 0;
         if (count === 1) {
@@ -223,7 +154,7 @@ export function setupAnimatedViewControls() {
         line.style.left = inset + 'px';
         line.style.width = Math.max(0, mpWidth - inset * 2) + 'px';
         line.style.height = lineThickness + 'px';
-        line.style.background = gradient;
+        line.style.background = `linear-gradient(90deg, transparent 0%, ${soft} 10%, ${strong} 50%, ${soft} 90%, transparent 100%)`;
         line.style.backgroundSize = '200% 100%';
         line.style.animation = `line-move 2.2s linear ${i * 0.12}s infinite`;
       });
@@ -235,20 +166,10 @@ export function setupAnimatedViewControls() {
       const count = movingLines.length;
       let spacingX = 0; if (count > 1) spacingX = availableX / (count - 1);
       movingLines.forEach((line, i) => {
-        const colorData = getLineColor(i);
-        let soft, strong, gradient;
-        
-        if (Array.isArray(colorData)) {
-          const grad = createGradientFromColors(colorData, '180deg');
-          gradient = grad.gradient;
-          soft = grad.soft;
-          strong = grad.strong;
-        } else {
-          const rgb = hexToRgb(colorData);
-          soft = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`;
-          strong = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
-          gradient = `linear-gradient(180deg, transparent 0%, ${soft} 10%, ${strong} 50%, ${soft} 90%, transparent 100%)`;
-        }
+        const color = getLineColor(i);
+        const rgb = hexToRgb(color);
+        const soft = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`;
+        const strong = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
 
         let x = 0;
         if (count === 1) {
@@ -277,7 +198,7 @@ export function setupAnimatedViewControls() {
   line.style.top = '0px';
         line.style.width = lineWidth + 'px';
         line.style.height = Math.max(0, window.innerHeight || document.documentElement.clientHeight) + 'px';
-        line.style.background = gradient;
+        line.style.background = `linear-gradient(180deg, transparent 0%, ${soft} 10%, ${strong} 50%, ${soft} 90%, transparent 100%)`;
         line.style.backgroundSize = '100% 200%';
         line.style.animation = `line-move-vertical 2.2s linear ${i * 0.12}s infinite`;
         line.style.zIndex = '0';
@@ -367,20 +288,10 @@ export function setupAnimatedViewControls() {
       }
 
         movingLines.forEach((line, idx) => {
-          const colorData = getLineColor(idx);
-          let soft, strong, gradient;
-          
-          if (Array.isArray(colorData)) {
-            const grad = createGradientFromColors(colorData, '90deg');
-            gradient = grad.gradient;
-            soft = grad.soft;
-            strong = grad.strong;
-          } else {
-            const rgb = hexToRgb(colorData);
-            soft = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`;
-            strong = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
-            gradient = `linear-gradient(90deg, transparent 0%, ${soft} 10%, ${strong} 50%, ${soft} 90%, transparent 100%)`;
-          }
+          const color = getLineColor(idx);
+          const rgb = hexToRgb(color);
+          const soft = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`;
+          const strong = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
           
           const s = starts[idx] || starts[0];
           const sx = s.sx, sy = s.sy;
@@ -408,7 +319,7 @@ export function setupAnimatedViewControls() {
             line.style.width = Math.round(Math.hypot(window.innerWidth, window.innerHeight)) + 'px';
             line.style.height = lineThickness + 'px';
             line.style.transform = `translate(-50%,-50%) rotate(${angleDeg}deg)`;
-            line.style.background = gradient;
+            line.style.background = `linear-gradient(90deg, transparent 0%, ${soft} 10%, ${strong} 50%, ${soft} 90%, transparent 100%)`;
             line.style.backgroundSize = '200% 100%';
             line.style.animation = `gradient-shift 2.4s linear ${idx * 0.12}s infinite`;
             line.style.zIndex = '0';
@@ -429,7 +340,7 @@ export function setupAnimatedViewControls() {
     line.style.top = midY_vp + 'px';
           line.style.width = length_vp + 'px';
           line.style.height = lineThickness + 'px';
-          line.style.background = gradient;
+          line.style.background = `linear-gradient(90deg, transparent 0%, ${soft} 10%, ${strong} 50%, ${soft} 90%, transparent 100%)`;
           line.style.backgroundSize = '200% 100%';
           line.style.transform = `translate(-50%,-50%) rotate(${angleDeg}deg)`;
           line.style.transformOrigin = '50% 50%';
@@ -446,18 +357,9 @@ export function setupAnimatedViewControls() {
       let spacingX = 0; if (count > 1) spacingX = availableX / (count - 1);
       
       movingLines.forEach((line, i) => {
-        const colorData = getLineColor(i);
-        let strong;
-        
-        if (Array.isArray(colorData) && colorData.length > 0) {
-          // For multiple colors in SVG, use the latest color
-          const latestColor = colorData[colorData.length - 1];
-          const rgb = hexToRgb(latestColor);
-          strong = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
-        } else {
-          const rgb = hexToRgb(colorData);
-          strong = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
-        }
+        const color = getLineColor(i);
+        const rgb = hexToRgb(color);
+        const strong = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`;
         
         let x = 0;
         if (count === 1) {
@@ -550,8 +452,6 @@ export function setupAnimatedViewControls() {
         line.style.height = lineThickness + 'px';
       });
     }
-
-    updateDebugOverlay(bounds, mpRect, movingLines.length);
   }
 
   // UI wiring: add controls into the right-top area
@@ -598,10 +498,8 @@ export function setupAnimatedViewControls() {
         const isMixedMode = mixedToggle && mixedToggle.checked;
         
         if (isMixedMode) {
-          // In mixed mode, add the new color to all existing lines
-          for (let i = 0; i < movingLines.length; i++) {
-            addColorToLine(i, acp.value);
-          }
+          // In mixed mode, add a new line with the new color (max 4)
+          addLineWithColor(acp.value);
           updateLinePositions();
         } else {
           // In normal mode, just update colors
@@ -616,10 +514,8 @@ export function setupAnimatedViewControls() {
           const isMixedMode = mixedToggle && mixedToggle.checked;
           
           if (isMixedMode) {
-            // Add current color to all lines
-            for (let i = 0; i < movingLines.length; i++) {
-              addColorToLine(i, acp.value);
-            }
+            // Add a new line with current color
+            addLineWithColor(acp.value);
           }
           updateLinePositions();
         });
